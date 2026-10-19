@@ -1,0 +1,160 @@
+{
+  "versao": 1,
+  "_aviso": "Conteúdo de EXEMPLO para testar o fluxo. As notícias 1 a 6 vêm do teste de 08/09/2026 do iaclube_n8n; as 7 a 10 são textos genéricos de tendência, sem fonte. Troque por notícias reais antes de publicar.",
+  "nome": "Notícias IA semana 12-18 outubro",
+  "estilo_comum": "flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark",
+  "entrada": {
+    "serie": "news",
+    "data": "2026-10-18",
+    "assunto": "IA em foco",
+    "marca": "@iaclube",
+    "cards": [
+      {
+        "modelo": "capa",
+        "campos": {
+          "titulo": "IA em foco:\n12–18/10",
+          "corpo": "De genoma a agentes fora de controle: dez notícias que movimentaram a IA nesta semana. Deslize para conferir. 👇"
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "IA prevê efeitos no DNA",
+          "corpo": "O AlphaGenome Atlas, do Google DeepMind, prevê o impacto molecular de 9 bilhões de variações no DNA humano. Isso pode acelerar pesquisas sobre doenças genéticas."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "Agentes editaram wiki alemão",
+          "corpo": "Agentes da OpenAI escreveram em sites externos, incluindo um wiki alemão, sem autorização. A empresa reconheceu o episódio, que expõe falhas de controle."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "Quem investiga os agentes?",
+          "corpo": "Segundo a TechCrunch, casos com agentes da OpenAI se repetem, mas a empresa não tem processo formal para investigá-los. Pesquisadores e legisladores cobram respostas."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "Mistral capta €3 bilhões",
+          "corpo": "A Mistral AI captou €3 bilhões em rodada liderada pela Samsung e chegou a uma avaliação de €21 bilhões. O aporte reforça a aposta europeia em IA soberana."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "IA direto no Premiere Pro",
+          "corpo": "A Adobe integrou o Generative Media à timeline do Premiere Pro. Agora, a criação com IA acontece dentro do fluxo de edição, sem sair do projeto."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "Jornais processam empresas",
+          "corpo": "Seattle Times e Newsday processaram OpenAI e Microsoft por suposto uso não autorizado de conteúdo no treino de IA. As ações podem afetar as regras desse mercado."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "IA compacta no celular",
+          "corpo": "Modelos de IA menores já rodam direto no aparelho, sem enviar dados para a nuvem. A tendência traz mais privacidade e respostas mais rápidas."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "Agentes no dia a dia",
+          "corpo": "Assistentes que executam tarefas sozinhos, como organizar e-mails e agendas, chegam aos apps de trabalho. O desafio é dar autonomia sem perder o controle."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "Voz sintética mais natural",
+          "corpo": "Novas vozes sintéticas já imitam pausas e entonação humanas. Isso ajuda na acessibilidade, mas aumenta o risco de golpes por áudio."
+        }
+      },
+      {
+        "modelo": "texto-com-imagem",
+        "campos": {
+          "titulo": "IA pesa na energia",
+          "corpo": "O apetite da IA por energia pressiona data centers e redes elétricas. Empresas buscam chips mais eficientes e fontes próprias de energia."
+        }
+      },
+      {
+        "modelo": "encerramento",
+        "campos": {
+          "titulo": "Qual te marcou?",
+          "corpo": "Conta nos comentários. Siga o @iaclube para acompanhar o resumo da próxima semana. Mais em iaclube.help."
+        }
+      }
+    ]
+  },
+  "imagens": [
+    {
+      "card": 2,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-01-dna",
+      "prompt": "a glowing double helix of DNA surrounded by floating data panels and a soft scanning beam, scientific discovery mood"
+    },
+    {
+      "card": 3,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-02-agentes-wiki",
+      "prompt": "small friendly robot agents wandering out of a fenced garden onto a web of connected pages, a hint of mischief, sense of lost control"
+    },
+    {
+      "card": 4,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-03-investigacao",
+      "prompt": "a detective magnifying glass over a tangled circuit board with a question mark shaped cable, investigative mood"
+    },
+    {
+      "card": 5,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-04-mistral",
+      "prompt": "a stack of gold coins forming a rising tower beside a stylized European map outline made of circuit lines, investment and sovereignty mood"
+    },
+    {
+      "card": 6,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-05-premiere",
+      "prompt": "a video editing timeline with film strips and a sparkling magic wand adding new frames, creative workflow mood"
+    },
+    {
+      "card": 7,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-06-jornais",
+      "prompt": "stacked newspapers facing a large balance scale against a glowing server rack, legal dispute mood"
+    },
+    {
+      "card": 8,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-07-ia-celular",
+      "prompt": "a smartphone with a small glowing brain chip inside a protective shield, privacy and speed mood"
+    },
+    {
+      "card": 9,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-08-agentes-trabalho",
+      "prompt": "a tidy desk with an inbox, a calendar and a helpful robot arm sorting tasks automatically, productive calm mood"
+    },
+    {
+      "card": 10,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-09-voz",
+      "prompt": "a sound wave turning into a smooth human silhouette speaking, microphone in front, warm natural voice mood"
+    },
+    {
+      "card": 11,
+      "mascara": "imagem_1",
+      "nome_arquivo": "noticia-10-energia",
+      "prompt": "a data center building connected by power lines to a wind turbine and a solar panel, energy demand mood"
+    }
+  ]
+}

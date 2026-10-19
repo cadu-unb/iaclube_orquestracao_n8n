@@ -1,0 +1,1149 @@
+{
+  "name": "Notícias IA — 10 imagens + cards",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Notícias IA: 10 imagens + cards\n**Fluxo (tudo pela ponte, porque o n8n está no Docker):** sobe o gerador de imagens → pede as 10 imagens → espera → desliga o gerador → sobe o gerenciador de carrosséis → produz os cards → desliga o gerenciador → devolve a pasta.\n\n**Antes de rodar:** deixe a **ponte** ligada no computador (`python3 scripts/ponte.py`) e cole o token dela no nó **Configuração**. Detalhes no README da pasta `iaclube_orquestracao_n8n`.\n\n**Resultado:** a saída do último nó (**Entregar resultado**) traz `pasta` e `arquivos` (caminhos no computador).\n\n**Se algo falhar:** o ramo vermelho desliga os dois servidores e mostra o motivo.",
+        "height": 330,
+        "width": 520,
+        "color": 4
+      },
+      "id": "38c23c9d-046a-5da1-b878-0a08d2bedc2d",
+      "name": "Nota: como usar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Ramo de falha\nQualquer erro cai aqui: monta a mensagem, **desliga os dois servidores** e termina o fluxo com o motivo.",
+        "height": 130,
+        "width": 560,
+        "color": 3
+      },
+      "id": "84e5b8cc-9b3f-5f12-90b8-3984840da103",
+      "name": "Nota: falha",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        980
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9511d50b-9426-5f92-8c11-ee83e88a60d2",
+      "name": "Iniciar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token e tamanhos.\nreturn [{ json: {\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  // (host.docker.internal NÃO existe nesse container; ele não tem extra_hosts.)\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'qFPgEFVBoIrIG2aHrN02aMR2YprNczxM',\n  arquivo_entrada: 'exemplo-noticias-10.json',   // arquivo da pasta entradas/\n  // Tamanho das imagens (múltiplos de 16). Pequena 3:2 = 624 x 416 (cerca de 4 min cada).\n  // Média 3:2 = 944 x 624 (cerca de 9 min cada). O espaço da imagem no card é 839 x 592.\n  largura: 624,\n  altura: 416,\n  espera_subir_s: 5,            // pausa depois de subir cada servidor\n  intervalo_consulta_s: 30,     // de quanto em quanto tempo olhar a fila de imagens\n  tempo_maximo_geracao_min: 240 // desiste se as imagens passarem disso\n} }];"
+      },
+      "id": "23daaf64-70b0-5fda-b128-3b2173342bd2",
+      "name": "Configuração",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/entradas/{{ $('Configuração').first().json.arquivo_entrada }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "db41c350-53ff-540f-b87d-34c6ee362531",
+      "name": "Ler arquivo de entrada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  estilo_comum: (dados.estilo_comum || '').trim(),\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
+      },
+      "id": "ac166c89-a638-5354-9042-266ce0a93379",
+      "name": "Validar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "b09500ad-8986-5902-91e6-211603e26a45",
+      "name": "Subir gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.espera_subir_s }}",
+        "unit": "seconds"
+      },
+      "id": "bec778ee-2872-5def-bcdc-e2cbbfc5fecd",
+      "name": "Esperar gerador subir",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        -40
+      ],
+      "webhookId": "f87ce5b3-2b7e-53c4-944e-95f776970e0b"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/health",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "1056e8b9-c9ed-5772-b24f-ab807bc6e2b4",
+      "name": "Consultar saúde do gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        -40
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 6,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d6518891-c771-54c3-bbb5-01952a3afe72",
+              "leftValue": "={{ $json.ready === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b79aeec3-c8b2-5c3f-a0ff-bafb48f82c3e",
+      "name": "Gerador pronto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = v.estilo_comum ? im.prompt.trim() + ', ' + v.estilo_comum : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
+      },
+      "id": "3c6188cb-084d-5a7c-931f-71889602a5c5",
+      "name": "Montar pedidos de imagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/jobs/free",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json; charset=utf-8",
+        "body": "={{ JSON.stringify($json.corpo) }}"
+      },
+      "id": "54c2aace-f37d-5f6e-ab5c-a83048af6fe6",
+      "name": "Enfileirar imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        -40
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const pedidos = $('Montar pedidos de imagem').all();\nconst respostas = $input.all();\nconst tickets = respostas.map((r, i) => ({\n  ticket: r.json.ticket,\n  card: pedidos[i].json.card,\n  mascara: pedidos[i].json.mascara,\n  nome_arquivo: pedidos[i].json.nome_arquivo,\n}));\nreturn [{ json: { tickets, total: tickets.length, iniciado_em: Date.now() } }];"
+      },
+      "id": "ad71ed9b-5656-5c3e-b5de-19073b527285",
+      "name": "Reunir tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.intervalo_consulta_s }}",
+        "unit": "seconds"
+      },
+      "id": "0683ba2d-420b-5089-9e2c-524db1298613",
+      "name": "Esperar geração",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        400
+      ],
+      "webhookId": "985f44c3-5b5b-5717-8ae5-35bf72e43be3"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/status?tickets={{ $('Reunir tickets').first().json.tickets.map(t => t.ticket).join(',') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "a8f5cd3c-8ca9-5a5d-8bd3-4f8f69ee3a73",
+      "name": "Consultar andamento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        400
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('Reunir tickets').first().json;\nconst cfg = $('Validar entrada').first().json.cfg;\nconst jobs = $input.first().json.jobs || {};\nconst cont = { queued: 0, running: 0, completed: 0, failed: 0, outro: 0 };\nconst falhas = [];\nfor (const t of r.tickets) {\n  const j = jobs[t.ticket] || { status: 'not_found' };\n  if (j.status in cont) cont[j.status]++; else cont.outro++;\n  if (j.status === 'failed' || j.status === 'not_found') {\n    falhas.push('card ' + t.card + ' (' + t.nome_arquivo + '): ' + (j.error || j.status));\n  }\n}\nconst minutos = Math.round((Date.now() - r.iniciado_em) / 6000) / 10;\nlet estado = 'esperando';\nlet motivo = '';\nif (falhas.length) {\n  estado = 'falhou';\n  motivo = 'Falha ao gerar imagem: ' + falhas.join(' | ');\n} else if (cont.completed === r.total) {\n  estado = 'concluido';\n} else if (minutos > cfg.tempo_maximo_geracao_min) {\n  estado = 'tempo_esgotado';\n  motivo = 'As imagens passaram de ' + cfg.tempo_maximo_geracao_min + ' min e ainda faltam ' + (r.total - cont.completed) + '.';\n}\nreturn [{ json: { estado, motivo, minutos, total: r.total, ...cont } }];"
+      },
+      "id": "c8969bbf-71cd-5192-8c25-1e6f85bc245e",
+      "name": "Avaliar andamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "2ddfc257-d2e8-56f6-9354-fe0bab8b18f9",
+              "leftValue": "={{ $json.estado === 'concluido' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f65bef41-e4c1-57a8-af39-240469d48be7",
+      "name": "Imagens prontas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5e48930c-fc2a-58b6-8d09-3ac52ebf0edf",
+              "leftValue": "={{ $json.estado === 'esperando' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "24f7db61-851f-5aee-a1b7-7acc515591ab",
+      "name": "Ainda gerando?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        960,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Reunir tickets').first().json.tickets.map(t => ({ json: t }));"
+      },
+      "id": "9c9f67de-c21b-562c-8ba6-d433498690fc",
+      "name": "Listar tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/jobs/{{ $json.ticket }}/result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "14e3cb75-50b2-5d3d-abb9-4501271b6b60",
+      "name": "Buscar caminho da imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        400
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst tickets = $('Listar tickets').all();\nconst resultados = $input.all();\nconst imagens = [];\nconst problemas = [];\nresultados.forEach((r, i) => {\n  const t = tickets[i].json;\n  const caminho = r.json.output_path;\n  if (!r.json.ready || !caminho) {\n    problemas.push('card ' + t.card + ' (' + t.nome_arquivo + '): imagem sem caminho de arquivo');\n  } else {\n    imagens.push({ card: t.card, mascara: t.mascara, caminho });\n  }\n});\nif (problemas.length) return [{ json: { ok: false, motivo: problemas.join(' | ') } }];\nreturn [{ json: { ok: true, pedido: {\n  versao: 1,\n  nome: v.nome,\n  entrada: v.entrada,\n  imagens,\n  exportacao: { formatos: ['png'], escalas: [1] },\n} } }];"
+      },
+      "id": "51ad828c-e2e8-512b-b575-90248da4fd99",
+      "name": "Montar pedido de produção",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "f8cceb6c-a585-5f34-88fc-da532adc79db",
+              "leftValue": "={{ $json.ok === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3eabc41a-59b4-500f-8d48-2abd2f90429f",
+      "name": "Pedido pronto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f4b0087c-6dab-599c-8112-79bee8295126",
+      "name": "Parar gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        400
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "dc9d43f8-9dcb-55d8-ab9a-8e26ea84bac3",
+      "name": "Subir gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        400
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.espera_subir_s }}",
+        "unit": "seconds"
+      },
+      "id": "b580161e-5772-5c87-a019-8cb1afe04d78",
+      "name": "Esperar gerenciador subir",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        360
+      ],
+      "webhookId": "d80b042d-db0e-5166-8fc4-7a0a998d6ade"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "3539cdbd-c355-594c-b817-884d66b23c1f",
+      "name": "Consultar saúde do gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        760
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 8,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/integracao/producao",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json; charset=utf-8",
+        "body": "={{ JSON.stringify($('Montar pedido de produção').first().json.pedido) }}"
+      },
+      "id": "6d3e4dbb-7451-5564-a448-b85f1f10f4bb",
+      "name": "Produzir cards",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        760
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst arquivos = (r.arquivos || []);\nreturn [{ json: {\n  ok: r.ok === true,\n  pasta: r.pasta,\n  geracao_id: r.geracao_id,\n  quantidade: arquivos.length,\n  arquivos: arquivos.map(a => a.caminho),\n  avisos: (r.avisos || []).map(a => (a.rotulo ? a.rotulo + ': ' : '') + a.mensagem),\n} }];"
+      },
+      "id": "2db7e326-b70a-515c-915f-5873b278bbff",
+      "name": "Montar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "16ddf214-1d45-54be-850f-7112119fb7a3",
+      "name": "Parar gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        760
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Devolve o resultado da produção (o nó anterior só desligou o servidor).\nreturn [{ json: $('Montar resultado').first().json }];"
+      },
+      "id": "6f6cdedd-3471-52d5-8f82-cc0e73466085",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nlet msg;\nif (j.motivo) {\n  msg = j.motivo;\n} else if (j.ready === false) {\n  msg = 'O gerador subiu, mas não está pronto: ' + (j.problems || []).join(' | ');\n} else if (j.error) {\n  const e = j.error;\n  msg = (e.message || JSON.stringify(e)) + (e.description ? ' — ' + e.description : '');\n} else if (j.stdout) {\n  msg = j.stdout;\n} else {\n  msg = 'Falha sem detalhe: ' + JSON.stringify(j).slice(0, 500);\n}\nreturn [{ json: { mensagem: msg } }];"
+      },
+      "id": "1c567ea0-1c21-57c8-b21f-9e8a85341847",
+      "name": "Montar mensagem de falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2480,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "813c78b5-d3d0-5a5a-b36b-c6d9e85634c9",
+      "name": "Parar todos os servidores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2720,
+        760
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "={{ $('Montar mensagem de falha').first().json.mensagem }}"
+      },
+      "id": "93a625cd-07ae-55ad-9665-8b6db7197f7e",
+      "name": "Falha no fluxo",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        760
+      ]
+    }
+  ],
+  "connections": {
+    "Iniciar": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Ler arquivo de entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler arquivo de entrada": {
+      "main": [
+        [
+          {
+            "node": "Validar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar entrada": {
+      "main": [
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerador": {
+      "main": [
+        [
+          {
+            "node": "Esperar gerador subir",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar gerador subir": {
+      "main": [
+        [
+          {
+            "node": "Consultar saúde do gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar saúde do gerador": {
+      "main": [
+        [
+          {
+            "node": "Gerador pronto?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerador pronto?": {
+      "main": [
+        [
+          {
+            "node": "Montar pedidos de imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar pedidos de imagem": {
+      "main": [
+        [
+          {
+            "node": "Enfileirar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enfileirar imagem": {
+      "main": [
+        [
+          {
+            "node": "Reunir tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reunir tickets": {
+      "main": [
+        [
+          {
+            "node": "Esperar geração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar geração": {
+      "main": [
+        [
+          {
+            "node": "Consultar andamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar andamento": {
+      "main": [
+        [
+          {
+            "node": "Avaliar andamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar andamento": {
+      "main": [
+        [
+          {
+            "node": "Imagens prontas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagens prontas?": {
+      "main": [
+        [
+          {
+            "node": "Listar tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ainda gerando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ainda gerando?": {
+      "main": [
+        [
+          {
+            "node": "Esperar geração",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar tickets": {
+      "main": [
+        [
+          {
+            "node": "Buscar caminho da imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar caminho da imagem": {
+      "main": [
+        [
+          {
+            "node": "Montar pedido de produção",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar pedido de produção": {
+      "main": [
+        [
+          {
+            "node": "Pedido pronto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedido pronto?": {
+      "main": [
+        [
+          {
+            "node": "Parar gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar gerador": {
+      "main": [
+        [
+          {
+            "node": "Subir gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Esperar gerenciador subir",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar gerenciador subir": {
+      "main": [
+        [
+          {
+            "node": "Consultar saúde do gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar saúde do gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Produzir cards",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produzir cards": {
+      "main": [
+        [
+          {
+            "node": "Montar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resultado": {
+      "main": [
+        [
+          {
+            "node": "Parar gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagem de falha": {
+      "main": [
+        [
+          {
+            "node": "Parar todos os servidores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar todos os servidores": {
+      "main": [
+        [
+          {
+            "node": "Falha no fluxo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
