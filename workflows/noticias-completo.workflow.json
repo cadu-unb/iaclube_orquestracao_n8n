@@ -1,0 +1,1961 @@
+{
+  "name": "Notícias IA · Completo (texto → arte)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Notícias IA · Completo (texto → arte)\n**Parte 1, texto (faixa de cima):** lê os feeds, tira o que já foi publicado (Data Table), a IA escolhe as notícias e escreve os textos **e o prompt da imagem de cada uma**, cria o card no Trello e grava a memória. É o fluxo `noticias-1-texto`.\n\n**Parte 2, arte (faixa de baixo):** **Montar entrada dos cards** transforma o texto no mesmo JSON de `entradas/exemplo-noticias-10.json` e segue o fluxo `noticias-2-arte`: gera as imagens, monta os cards e comenta no card do Trello a pasta com as imagens.\n\n**Antes de rodar:** a **ponte** ligada no computador (`python3 scripts/ponte.py`) e o token dela no nó **Configuração**. Lá também ficam quantas notícias, o estilo das imagens e o tamanho.",
+        "height": 380,
+        "width": 640,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "name": "Nota: como usar",
+      "id": "e9275177-2a2e-5c1c-a2a1-ab4e43941015",
+      "position": [
+        -480,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Parte 2: imagens e cards\nMesmo caminho do workflow `noticias-2-arte`. Se algo falhar aqui, o texto **já está no Trello**, e o comentário de falha traz o JSON de entrada pronto para rodar só a arte depois.",
+        "height": 150,
+        "width": 520,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "name": "Nota: arte",
+      "id": "b404e032-ff44-5a38-a2f7-d41b885e4a2f",
+      "position": [
+        240,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Ramo de falha\nQualquer erro da arte cai aqui: monta a mensagem, **desliga os dois servidores**, comenta no card do Trello e termina o fluxo com o motivo.",
+        "height": 130,
+        "width": 560,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "name": "Nota: falha",
+      "id": "ae6bed73-8d95-59d8-afa4-6cd43c03ca96",
+      "position": [
+        2480,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                5
+              ],
+              "triggerAtHour": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        80
+      ],
+      "id": "06c3633e-7f87-5bf5-bc4d-6caa503ebec6",
+      "name": "Toda sexta 15h",
+      "notes": "Sexta 15h. O Dicionario IA foi movido para segunda ([1]), entao nao ha mais dois fluxos disparando neste minuto."
+    },
+    {
+      "parameters": {},
+      "id": "eb8a95d0-0377-5e3f-8148-6ba50b8725a9",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token, tamanho da edição e das imagens.\nreturn [{ json: {\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  // (host.docker.internal NÃO existe nesse container; ele não tem extra_hosts.)\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'qFPgEFVBoIrIG2aHrN02aMR2YprNczxM',\n  // A IA escolhe entre noticias_min e noticias_max notícias. Até 6 o carrossel leva o Índice\n  // (o modelo de Índice do news tem 6 itens); com mais de 6, o Índice fica de fora.\n  noticias_min: 4,\n  noticias_max: 6,\n  serie: 'news',\n  assunto: 'IA em foco',        // entra no nome dos arquivos dos cards\n  marca: '@iaclube',\n  // Acrescentado ao fim de todo prompt de imagem: é o que deixa as imagens com a mesma cara.\n  estilo_comum: \"flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark\",\n  // Tamanho das imagens (múltiplos de 16). Pequena 3:2 = 624 x 416 (cerca de 4 min cada).\n  // Média 3:2 = 944 x 624 (cerca de 9 min cada). O espaço da imagem no card é 839 x 592.\n  largura: 624,\n  altura: 416,\n  espera_subir_s: 5,            // pausa depois de subir cada servidor\n  intervalo_consulta_s: 30,     // de quanto em quanto tempo olhar a fila de imagens\n  tempo_maximo_geracao_min: 240 // desiste se as imagens passarem disso\n} }];"
+      },
+      "id": "779d51de-9258-5639-8264-c252cf32f4d3",
+      "name": "Configuração",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "xFQUooyLz6dzOA8Z",
+          "mode": "list",
+          "cachedResultName": "noticias_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/xFQUooyLz6dzOA8Z"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        40,
+        160
+      ],
+      "id": "c8364eca-fa86-5227-a45b-9effbada2ce5",
+      "name": "Memoria - ler",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lista de feeds RSS. O node seguinte (RSS Feed Read) roda uma vez por item\n// recebido, entao cada linha daqui vira uma leitura de feed.\n// Para adicionar ou remover fonte, basta editar este array.\nconst feeds = [\n  { fonte: 'OpenAI',          url: 'https://openai.com/news/rss.xml' },\n  { fonte: 'Google DeepMind', url: 'https://deepmind.google/blog/rss.xml' },\n  { fonte: 'TechCrunch',      url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },\n  { fonte: 'The Verge',       url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml' },\n  { fonte: 'Anthropic',       url: 'https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml' }\n];\n\nreturn feeds.map(f => ({ json: f }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        160
+      ],
+      "id": "937c5dbe-a5a3-5391-9cd2-51204994014c",
+      "name": "Lista de feeds"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        160
+      ],
+      "id": "c203f998-b0f0-5042-905d-d48ff3641c9c",
+      "name": "RSS Feed Read",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "notes": "Continue On Fail ligado: se um feed sair do ar, os outros seguem."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recebe TODAS as noticias de TODOS os feeds e faz tres coisas:\n// 1. descarta o que e mais velho que 7 dias\n// 2. descarta o que ja virou post (cruzamento com a Data Table)\n// 3. monta o texto que vai no prompt da IA\n\nfunction normalizar(texto) {\n  return String(texto || \"\")\n    .trim()\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s]/g, \"\")\n    .replace(/\\s+/g, \" \");\n}\n\n// --- memoria: o que ja foi publicado ---\nconst memoria = $('Memoria - ler').all().map(i => i.json);\nconst titulosUsados = new Set(\n  memoria.map(l => l.titulo_normalizado || normalizar(l.titulo)).filter(t => t)\n);\nconst linksUsados = new Set(\n  memoria.map(l => l.link).filter(l => l)\n);\n\n// --- janela de 7 dias ---\nconst AGORA = Date.now();\nconst LIMITE = AGORA - 7 * 24 * 60 * 60 * 1000;\n\nconst brutas = $input.all().map(i => i.json);\n\nlet semData = 0;\nlet velhas = 0;\nlet repetidas = 0;\n\nconst vistas = new Set(); // evita a mesma noticia vinda de dois feeds\nconst selecionadas = [];\n\nfor (const item of brutas) {\n  // O RSS Feed Read as vezes devolve um item vazio (feed fora do ar +\n  // Always Output Data). Esse guard evita quebrar o loop.\n  if (!item || !item.title) continue;\n\n  // Cada feed nomeia o campo de data de um jeito. Tentamos todos.\n  const dataBruta = item.isoDate || item.pubDate || item.date || item.published;\n  const ts = dataBruta ? Date.parse(dataBruta) : NaN;\n\n  if (isNaN(ts)) { semData++; continue; }\n  if (ts < LIMITE) { velhas++; continue; }\n\n  const norm = normalizar(item.title);\n  const link = item.link || '';\n\n  if (titulosUsados.has(norm) || (link && linksUsados.has(link))) { repetidas++; continue; }\n  if (vistas.has(norm)) { repetidas++; continue; }\n  vistas.add(norm);\n\n  // A fonte vem do dominio do link: o RSS Feed Read substitui o $json e\n  // perde o campo \"fonte\" que veio do node Lista de feeds.\n  let fonte = 'desconhecida';\n  try {\n    fonte = new URL(link).hostname.replace(/^www\\./, '');\n  } catch (e) { /* link ausente ou malformado: mantem 'desconhecida' */ }\n\n  const resumo = String(item.contentSnippet || item.content || item.description || '')\n    .replace(/<[^>]*>/g, ' ')   // tira tags HTML\n    .replace(/\\s+/g, ' ')\n    .trim()\n    .slice(0, 400);\n\n  selecionadas.push({\n    manchete: item.title.trim(),\n    resumo,\n    fonte,\n    link,\n    data: new Date(ts).toISOString(),\n    data_br: new Date(ts).toLocaleDateString('pt-BR'),\n    titulo_normalizado: norm,\n    ts\n  });\n}\n\n// Mais recentes primeiro, no maximo 30 (o prompt fica grande demais alem disso)\nselecionadas.sort((a, b) => b.ts - a.ts);\nconst top = selecionadas.slice(0, 30);\n\n// Texto numerado que vai direto no prompt\nconst noticias_disponiveis = top\n  .map((n, i) => `${i + 1}. [${n.fonte} | ${n.data_br}] ${n.manchete}\\n   Link: ${n.link}\\n   Resumo: ${n.resumo}`)\n  .join('\\n\\n');\n\nreturn [{\n  json: {\n    total_disponiveis: top.length,\n    noticias_disponiveis,\n    noticias_lista: top,\n    data_hoje: new Date().toLocaleDateString('pt-BR'),\n    // contadores para depuracao: aparecem na saida do node\n    descartadas_sem_data: semData,\n    descartadas_por_idade: velhas,\n    descartadas_repetidas: repetidas,\n    total_lido: brutas.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        160
+      ],
+      "id": "d3cd7610-679c-59f5-aa9e-dda30a552262",
+      "name": "Filtra e cruza memoria"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1000000-0000-4000-8000-0000000000f0",
+              "leftValue": "={{ $json.total_disponiveis }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        920,
+        160
+      ],
+      "id": "dc7226df-9ba8-5f6c-88d1-df8ed79a0cc0",
+      "name": "IF - Tem noticia suficiente?",
+      "notes": "Se sobraram menos de 3 noticias novas na semana, nao gera post."
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        340
+      ],
+      "id": "638e7a03-e98d-51e6-94fc-fb701ac4d514",
+      "name": "Sem noticia nova"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-6",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        1140,
+        0
+      ],
+      "id": "430fa2a3-82ec-595a-a56d-607a43def04f",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uq6VzyHMKMZCKDRL",
+          "name": "Anthropic account"
+        }
+      },
+      "notes": "Modelo ativo. O node OpenAI ao lado esta desconectado -- ligue um ou outro, nunca os dois."
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-pro",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-pro"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "2354bada-ba90-553b-94a4-72744ffa027b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Qi02ZAkvb1kjIeTU",
+          "name": "OpenAI account"
+        }
+      },
+      "notes": "Reserva, desconectado de proposito. maxTokens definido para o caso de voce ligar: sem ele a OpenAI reserva o maximo do modelo e conta tudo contra o limite por minuto."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voce e o redator de conteudo do IAClube, uma pagina educativa sobre inteligencia\nartificial no Instagram, Facebook e LinkedIn.\n\nPERSONALIDADE DA MARCA\n- Tom explicativo e amigavel, como um amigo que entende de IA explicando pra outro\n- Nunca soa academico, arrogante ou robotico\n- Evita jargao sem explicar; quando usa um termo tecnico, explica na hora\n- Publico-alvo: pessoas de 18 a 30 anos, a maioria com conhecimento basico de\n  ferramentas de IA, mas parte do publico ja e intermediario/avancado\n\nSUA TAREFA HOJE\nMontar o post \"Noticias da Semana\": um carrossel que resume as noticias mais\nrelevantes de inteligencia artificial dos ultimos 7 dias.\n\nHoje e {{ $json.data_hoje }}.\n\nREGRA MAIS IMPORTANTE DESTE POST\nVoce SO pode usar as noticias da lista abaixo. Ela ja foi filtrada por data e ja\nexclui o que a pagina publicou antes. Nao acrescente nenhuma noticia de memoria,\nnao invente manchete, nao invente numero, nao invente declaracao e nao invente\nlink. Se voce acha que faltou uma noticia importante, ignore esse impulso: ela\nnao esta na lista porque nao foi confirmada por nenhuma das fontes monitoradas.\nCada noticia da lista abaixo tem um NUMERO. Ao escolher uma noticia, copie esse\nnumero no campo \"indice\". E por ele que a automacao recupera a URL correta do\nfeed, entao o numero precisa estar certo. Copie tambem o campo \"link\", mas\nsem alterar um caractere: ele serve so como conferencia.\n\nNOTICIAS DISPONIVEIS ESTA SEMANA ({{ $json.total_disponiveis }} encontradas):\n{{ $json.noticias_disponiveis }}\n\nCOMO ESCOLHER\n- Selecione entre {{ $('Configuração').first().json.noticias_min }} e {{ $('Configuração').first().json.noticias_max }} noticias, as mais relevantes para quem usa IA no dia a dia.\n  Se a lista acima tiver menos de {{ $('Configuração').first().json.noticias_min }} itens, use TODAS as que existem -- e melhor um\n  carrossel curto do que inventar noticia para completar\n- Prefira variedade de fontes e de assunto -- nao faca um carrossel so sobre uma\n  empresa\n- Priorize o que muda alguma coisa na pratica para o publico (lancamento que da\n  para usar, mudanca de preco, regra nova, risco relevante) em vez de noticia\n  corporativa (rodada de investimento, contratacao de executivo)\n- Se uma noticia for muito tecnica, explique o impacto em vez do mecanismo\n\nCOMO O CARROSSEL E MONTADO\nVoce NAO escreve a lista de slides. A automacao monta os slides a partir do que\nvoce devolver, nesta ordem:\n\n1. capa, a partir do campo \"gancho\"\n2. um slide de indice, montado com os campos \"rotulo_indice\" das noticias\n3. um slide por noticia, usando \"manchete\" como titulo e \"texto_slide\" como corpo,\n   com uma ilustracao gerada a partir de \"prompt_imagem\"\n4. um slide de fechamento fixo, escrito pela automacao\n\nPor isso: nao escreva slide de capa, nao escreva slide de indice, nao escreva\nslide de despedida e nao escreva um campo \"slides\". Se voce escrever, sera\nignorado.\n\nO GANCHO (capa)\nE a unica coisa que a pessoa ve antes de decidir se para ou continua rolando.\nEle nao anuncia a edicao: ele conta o fato mais forte da semana, direto.\n- Escolha UMA das noticias que voce selecionou -- a de maior impacto pratico --\n  e escreva o fato dela como afirmacao. Copie o numero dela em \"indice_noticia\":\n  a automacao usa esse numero para colocar essa noticia como a primeira do\n  carrossel, para a capa nao prometer uma coisa e entregar outra\n- Nao escreva \"confira as noticias da semana\", \"resumo semanal de IA\" nem\n  \"as principais noticias de IA\" -- a automacao ja acrescenta sozinha a chamada\n  que convida a ver o resto. Se voce escrever algo parecido, vai sair duplicado\n- Nao exagere e nao adjetive o fato (\"bombastico\", \"chocante\"). Numero concreto\n  e mudanca concreta prendem mais que adjetivo, e aqui precisao vale mais que\n  impacto: essa e a frase que mais gente vai ler\n\nOS ROTULOS DO INDICE\nCada noticia leva um \"rotulo_indice\" de 2 a 4 palavras, que e como ela aparece\nno slide de indice (\"preco da OpenAI\", \"regra nova na UE\"). Sao etiquetas, nao\nfrases: sem verbo, sem ponto final. Escreva de forma que a pessoa entenda o\nassunto sem ja saber a noticia.\n\nLIMITES DE CARACTERE (obrigatorios: o texto vai direto para a arte, e cada card\ntem espaco fixo. Texto maior que o limite sai cortado ou espremido)\n- gancho.titulo: no maximo 20 caracteres. Sai em letra grande, em ate 2 linhas\n- gancho.texto: no maximo 95 caracteres. A capa e curta de proposito, e a\n  automacao ainda acrescenta depois dele a chamada fixa da capa\n- noticias[].manchete: no maximo 31 caracteres -- ela vira o TITULO do card\n  daquela noticia, em ate 2 linhas, entao precisa caber\n- noticias[].rotulo_indice: no maximo 20 caracteres (vira um item do indice)\n- noticias[].texto_slide: entre 90 e 167 caracteres, com comprimento parecido\n  entre as noticias\n- noticias[].resumo: no maximo 300 caracteres (vai no card, nao na arte)\n- noticias[].por_que_importa: no maximo 150 caracteres (vai no card, nao na arte)\n- noticias[].prompt_imagem: entre 60 e 300 caracteres\n\nA IMAGEM DE CADA NOTICIA\nCada card de noticia leva uma ilustracao, criada por um gerador de imagens local\na partir do campo \"prompt_imagem\". Escreva esse campo assim:\n- em INGLES: o gerador de imagens entende ingles bem melhor\n- uma cena concreta e simples que represente a noticia por metafora visual:\n  objetos, lugar e clima. Exemplo: \"a smartphone with a small glowing chip\n  inside a protective shield, privacy and speed mood\"\n- sem texto, letras, numeros, logotipos nem nome de empresa, marca ou produto:\n  o gerador escreve mal e nao deve imitar marca\n- sem pessoas reais e sem rostos reconheciveis\n- nao descreva estilo de arte, cores nem enquadramento: a automacao acrescenta\n  sozinha o estilo visual da pagina, igual para todas as imagens\n- uma cena diferente para cada noticia\n\nONDE FICAM OS LINKS (regra fixa, nao invente outra)\nExiste UM lugar so para as fontes: a legenda. Siga isso literalmente:\n- Nenhum texto de slide contem URL. Link nao e legivel numa arte e nao e clicavel\n- Quando um slide precisar mencionar a fonte, cite so o nome dela (\"segundo a\n  TechCrunch\"). NUNCA escreva \"no proximo slide\", \"logo abaixo\", \"nos\n  comentarios\" ou \"no link da bio\" -- nenhuma dessas coisas vai existir. Nao\n  escreva tambem \"as fontes estao na legenda\": o slide final da automacao ja diz\n  isso, e repetir cansa\n- Nas legendas, nao escreva onde as fontes estao e nao copie os links. A\n  automacao anexa a lista de fontes no fim de cada legenda na hora de publicar.\n  Escreva as tres legendas como texto completo por si so\n\nCUIDADO COM PRECISAO\n- Nao afirme mais do que o resumo da noticia sustenta\n- Se algo estiver ambiguo no resumo, escreva de forma mais cautelosa\n  (\"segundo a fonte\", \"a empresa afirma\") em vez de apresentar como fato fechado\n\nAS TRES LEGENDAS\nO carrossel e o MESMO nas tres redes. A unica coisa que muda e a legenda.\nEscreva as tres descrevendo a mesma edicao, sem inventar conteudo diferente:\n- instagram: curta e envolvente, 1-2 emojis, termina com pergunta ou\n  call-to-action leve. Ate 600 caracteres\n- facebook: adaptacao da do Instagram, um pouco mais explicativa e com menos\n  dependencia de emoji, ja que o feed do Facebook favorece texto. Ate 800 caracteres\n- linkedin: mais analitica, sem emojis, tom profissional, pode trazer uma\n  leitura do que a semana indica sobre o setor. Ate 1200 caracteres\n\nFORMATO DE SAIDA\nResponda APENAS com um JSON valido, sem nenhum texto antes ou depois, sem\nblocos de codigo markdown. Siga exatamente esta estrutura:\n\n{\n  \"titulo_edicao\": \"titulo curto da edicao da semana\",\n  \"gancho\": {\n    \"indice_noticia\": 1,\n    \"titulo\": \"titulo curto da capa\",\n    \"texto\": \"o fato mais forte da semana, dito direto\"\n  },\n  \"noticias\": [\n    {\n      \"indice\": 1,\n      \"manchete\": \"manchete reescrita com as suas palavras, curta e clara\",\n      \"rotulo_indice\": \"etiqueta de 2 a 4 palavras\",\n      \"texto_slide\": \"o que aconteceu e por que importa, em 1-2 frases\",\n      \"resumo\": \"2-3 frases explicando o que aconteceu\",\n      \"por_que_importa\": \"1 frase sobre o impacto pratico para o publico\",\n      \"prompt_imagem\": \"concrete scene in english, no text, no logos\",\n      \"fonte\": \"copie o campo fonte da lista\",\n      \"link\": \"copie o campo link da lista, exatamente igual\"\n    }\n  ],\n  \"legendas\": {\n    \"instagram\": \"...\",\n    \"facebook\": \"...\",\n    \"linkedin\": \"...\"\n  },\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"tema_card\": \"titulo curto que identifica essa peca de conteudo\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1140,
+        160
+      ],
+      "id": "b95c3ed3-453c-5458-a081-2c836d54176d",
+      "name": "AI Agent - Noticias",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "retryOnFail: cobre 429 de rate limit, que se resolve sozinho na janela seguinte."
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const raw = $input.first().json.output;\n\n  let clean = String(raw).replace(/```json|```/g, '').trim();\n\n  const inicio = clean.indexOf('{');\n  const fim = clean.lastIndexOf('}');\n  if (inicio !== -1 && fim !== -1) {\n    clean = clean.slice(inicio, fim + 1);\n  }\n\n  const parsed = JSON.parse(clean);\n\n  // ---------- 1) CONTRATO MINIMO ----------\n  const faltando = [];\n  if (!parsed.titulo_edicao) faltando.push('titulo_edicao');\n  if (!parsed.tema_card) faltando.push('tema_card');\n  if (!Array.isArray(parsed.noticias) || parsed.noticias.length === 0) faltando.push('noticias');\n  if (!parsed.gancho || !parsed.gancho.texto) faltando.push('gancho.texto');\n  if (!parsed.legendas) faltando.push('legendas');\n  else {\n    for (const rede of ['instagram', 'facebook', 'linkedin']) {\n      if (!parsed.legendas[rede]) faltando.push('legendas.' + rede);\n    }\n  }\n\n  if (faltando.length) {\n    return [{ json: { erro: true, mensagem: 'Campos ausentes: ' + faltando.join(', '), bruto: clean } }];\n  }\n\n  const avisos = [];\n\n  // O modelo foi instruido a nao escrever slides -- a automacao monta.\n  if (Array.isArray(parsed.slides) && parsed.slides.length) {\n    avisos.push('a IA devolveu um array \"slides\" (' + parsed.slides.length + ' itens); foi ignorado, os slides sao montados pela automacao');\n  }\n  delete parsed.slides;\n\n  // ---------- 2) CAMPOS POR NOTICIA ----------\n  parsed.noticias.forEach((n, i) => {\n    if (!n.manchete) avisos.push('noticia ' + (i + 1) + ' sem manchete');\n    if (!n.texto_slide) avisos.push('noticia ' + (i + 1) + ' sem texto_slide -- o slide dela vai sair vazio');\n    if (!n.rotulo_indice) avisos.push('noticia ' + (i + 1) + ' sem rotulo_indice -- vai faltar no slide de indice');\n    if (!n.prompt_imagem) avisos.push('noticia ' + (i + 1) + ' sem prompt_imagem -- a imagem vai sair de um prompt generico');\n  });\n\n  // ---------- 3) A CAPA PRECISA APONTAR PARA UMA NOTICIA SELECIONADA ----------\n  // Sem isso a capa promete um assunto que o carrossel nao entrega.\n  const indices = parsed.noticias.map(n => Number(n.indice)).filter(Number.isInteger);\n  let alvo = Number(parsed.gancho.indice_noticia);\n  if (!indices.includes(alvo)) {\n    alvo = indices.length ? indices[0] : null;\n    parsed.gancho.indice_noticia = alvo;\n    parsed.capa_suspeita = true;\n    avisos.push('a capa nao aponta para nenhuma noticia selecionada -- conferir se ela fala da primeira noticia do carrossel');\n  } else {\n    parsed.capa_suspeita = false;\n  }\n\n  if (!parsed.gancho.titulo) {\n    parsed.gancho.titulo = String(parsed.titulo_edicao || 'Esta semana');\n    avisos.push('gancho sem titulo -- usado o titulo da edicao');\n  }\n\n  // ---------- 4) LIMITES E REFERENCIAS QUEBRADAS (avisos, nao bloqueiam) ----------\n  const lim = (valor, max, rotulo) => {\n    const n = String(valor || '').length;\n    if (n > max) avisos.push(rotulo + ' com ' + n + ' chars, limite ' + max);\n  };\n\n  // Limites dos modelos do conjunto news (iaclube_n8n/templates/news/limites.json).\n  lim(parsed.gancho.titulo, 20, 'titulo da capa');\n  lim(parsed.gancho.texto, 95, 'texto da capa');\n\n  parsed.noticias.forEach((n, i) => {\n    lim(n.manchete, 31, 'manchete da noticia ' + (i + 1) + ' (vira titulo de slide)');\n    lim(n.rotulo_indice, 20, 'rotulo_indice da noticia ' + (i + 1));\n    lim(n.prompt_imagem, 300, 'prompt_imagem da noticia ' + (i + 1));\n    lim(n.resumo, 300, 'resumo da noticia ' + (i + 1));\n    lim(n.por_que_importa, 150, 'por_que_importa da noticia ' + (i + 1));\n    const t = String(n.texto_slide || '').length;\n    if (t > 167) avisos.push('texto_slide da noticia ' + (i + 1) + ' com ' + t + ' chars, limite 167');\n    if (t && t < 90) avisos.push('texto_slide da noticia ' + (i + 1) + ' com ' + t + ' chars, minimo 90');\n  });\n\n  // As fontes so existem na legenda. Se o modelo apontar para outro lugar,\n  // ou enfiar URL na arte, o aviso aparece no card.\n  const proibido = /pr[oó]ximo slide|slide seguinte|slide a seguir|logo abaixo|aqui embaixo|nos coment[aá]rios|link da bio/i;\n  const anunciaEdicao = /confira|resumo (da |desta )?semana|principais not[ií]cias|not[ií]cias da semana/i;\n\n  const textosSlide = [\n    { rotulo: 'capa', texto: parsed.gancho.titulo + ' ' + parsed.gancho.texto }\n  ].concat(parsed.noticias.map((n, i) => ({\n    rotulo: 'noticia ' + (i + 1),\n    texto: (n.manchete || '') + ' ' + (n.texto_slide || '')\n  })));\n\n  textosSlide.forEach(s => {\n    if (proibido.test(s.texto)) avisos.push(s.rotulo + ' aponta para lugar inexistente');\n    if (/https?:\\/\\//i.test(s.texto)) avisos.push(s.rotulo + ' tem URL no texto');\n  });\n\n  // A chamada \"confira essa e mais noticias da semana\" e fixa e adicionada por\n  // codigo. Se o modelo escrever algo parecido na capa, sai duplicado.\n  if (anunciaEdicao.test(parsed.gancho.titulo + ' ' + parsed.gancho.texto)) {\n    avisos.push('a capa anuncia a edicao em vez de dar o fato -- a chamada fixa ja faz isso, vai sair repetido');\n  }\n\n  for (const rede of ['instagram', 'facebook', 'linkedin']) {\n    if (proibido.test(parsed.legendas[rede])) avisos.push('legenda ' + rede + ' aponta para lugar inexistente');\n  }\n\n  return [{ json: { ...parsed, erro: false, avisos } }];\n} catch (e) {\n  return [{ json: { erro: true, mensagem: e.message } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        160
+      ],
+      "id": "a83fea46-7b33-53cd-b2fd-2a3ab6c54871",
+      "name": "Parse"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1000000-0000-4000-8000-0000000000f1",
+              "leftValue": "={{ $json.erro }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1580,
+        160
+      ],
+      "id": "1941294e-35f3-59ee-8fbe-971fa764a2ae",
+      "name": "IF - Parse OK?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        340
+      ],
+      "id": "b5e813c0-b2a6-59ed-9853-336214cc0e04",
+      "name": "Parse falhou",
+      "notes": "Ramo falso. Abra o item aqui para ver 'mensagem' e 'bruto' quando a IA devolver JSON invalido ou incompleto."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepara os dados para o Trello e para a memoria.\n// Diferenca importante em relacao a segunda e quarta: aqui UM post cobre\n// VARIAS noticias, entao a normalizacao acontece dentro de cada noticia.\nfunction normalizar(texto) {\n  return String(texto || \"\")\n    .trim()\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s]/g, \"\")\n    .replace(/\\s+/g, \" \");\n}\n\n// Chave de comparacao de URL: ignora protocolo, www, parametros de rastreio\n// (?utm_source=rss...) e barra final. Sem isso, o link do feed e o link copiado\n// pelo modelo quase nunca batem por igualdade exata.\nfunction chaveLink(url) {\n  const bruto = String(url || '').trim();\n  if (!bruto) return '';\n  try {\n    const u = new URL(bruto);\n    return u.hostname.toLowerCase().replace(/^www\\./, '') +\n           u.pathname.toLowerCase().replace(/\\/+$/, '');\n  } catch (e) {\n    return bruto.toLowerCase()\n      .replace(/^https?:\\/\\//, '')\n      .replace(/^www\\./, '')\n      .split(/[?#]/)[0]\n      .replace(/\\/+$/, '');\n  }\n}\n\nfunction lista(valor) {\n  return Array.isArray(valor) ? valor : [];\n}\n\nconst dados = $input.first().json;\n\n// A lista original (antes da IA escolher) serve para recuperar o link real e o\n// titulo_normalizado da noticia do feed: a IA reescreve a manchete, e se\n// gravassemos a versao reescrita a checagem de duplicata da proxima semana\n// nunca daria match.\nconst original = $('Filtra e cruza memoria').first().json.noticias_lista || [];\n\nconst porLink = {};\noriginal.forEach(n => {\n  const k = chaveLink(n.link);\n  if (k) porLink[k] = n;\n});\n\nlet noticias = lista(dados.noticias).map(n => {\n  // 1a tentativa: o numero da noticia na lista numerada do prompt.\n  // Copiar um numero de um digito e muito mais confiavel que copiar uma URL.\n  let base = null;\n  let casou_por = 'nenhum';\n\n  const idx = Number(n.indice);\n  if (Number.isInteger(idx) && idx >= 1 && idx <= original.length) {\n    base = original[idx - 1];\n    casou_por = 'indice';\n  }\n\n  // 2a tentativa: link normalizado, caso o indice venha errado ou ausente.\n  if (!base) {\n    const achado = porLink[chaveLink(n.link)];\n    if (achado) {\n      base = achado;\n      casou_por = 'link';\n    }\n  }\n\n  return {\n    indice: Number(n.indice),\n    manchete: String(n.manchete || ''),\n    rotulo_indice: String(n.rotulo_indice || n.manchete || ''),\n    texto_slide: String(n.texto_slide || ''),\n    resumo: String(n.resumo || ''),\n    por_que_importa: String(n.por_que_importa || ''),\n    prompt_imagem: String(n.prompt_imagem || '').replace(/\\s+/g, ' ').trim(),\n    fonte: base ? base.fonte : String(n.fonte || ''),\n    // o link do feed manda: se o modelo mexeu na URL, a versao dele e descartada\n    link: base ? base.link : String(n.link || ''),\n    link_original_do_modelo: String(n.link || ''),\n    titulo_memoria: base ? base.manchete : String(n.manchete || ''),\n    titulo_normalizado: base ? base.titulo_normalizado : normalizar(n.manchete),\n    link_confirmado: Boolean(base),\n    casou_por\n  };\n});\n\nconst avisos = lista(dados.avisos).slice();\n\n// A noticia da capa vai para a frente da fila. O gancho afirma o fato dela;\n// se ela aparecesse no meio do carrossel, a promessa da capa ficaria pendurada.\nconst alvo = Number(dados.gancho && dados.gancho.indice_noticia);\nconst pos = noticias.findIndex(n => n.indice === alvo);\nif (pos > 0) {\n  const [capa] = noticias.splice(pos, 1);\n  noticias.unshift(capa);\n}\n\n// Noticia que nao casou com nenhuma da lista pode ter sido inventada:\n// esse e o pior erro possivel neste post, entao vira aviso no card.\nnoticias.forEach((n, i) => {\n  if (!n.link_confirmado) {\n    avisos.push(`noticia ${i + 1} nao casou com nenhuma da lista de feeds -- conferir antes de publicar`);\n  }\n});\n\n// Se a noticia da capa e justamente uma nao confirmada, o erro sai na primeira\n// tela do post. Isso nao bloqueia a execucao -- jogar fora a edicao inteira por\n// causa de um item seria pior -- mas marca o card de forma dificil de ignorar.\nconst capaSuspeita = Boolean(dados.capa_suspeita) || (noticias.length > 0 && !noticias[0].link_confirmado);\nif (capaSuspeita) {\n  avisos.unshift('A CAPA PRECISA DE CONFERENCIA: a noticia da capa nao foi confirmada nos feeds ou nao foi identificada. Verificar antes de aprovar.');\n}\n\nreturn [{\n  json: {\n    ...dados,\n    noticias,\n    avisos,\n    hashtags: lista(dados.hashtags),\n    total_noticias: noticias.length,\n    links_nao_confirmados: noticias.filter(n => !n.link_confirmado).length,\n    capa_suspeita: capaSuspeita,\n    prefixo_titulo: capaSuspeita ? '[CONFERIR CAPA] ' : '',\n    data: new Date().toISOString(),\n    status: \"gerado\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        160
+      ],
+      "id": "0cc662d6-4ba9-5dfc-a534-7519237f48ea",
+      "name": "Normaliza noticias"
+    },
+    {
+      "parameters": {
+        "jsCode": "// MONTAGEM DO CARROSSEL\n// Os slides nao vem da IA: sao montados aqui a partir das noticias ja\n// confirmadas contra os feeds. O motivo e sincronia -- quando o modelo escrevia\n// a lista de slides por conta propria, nada garantia que ela correspondesse as\n// noticias selecionadas, nem que o indice batesse com o que vinha depois.\n//\n// PAPEIS: gancho, contexto, desenvolvimento, cta. Sao os mesmos quatro usados\n// em segunda e quarta, para o template de arte ter um vocabulario so.\n//\n// TEXTOS FIXOS: a chamada da capa e o slide de CTA vivem aqui e em nenhum outro\n// lugar. Mudou aqui, mudou em toda edicao de sexta.\n\nconst CHAMADA_CAPA = 'Confira essa e mais notícias da semana:';\nconst PERFIL = '@iaclube';\nconst SITE = 'iaclube.help';\n\nconst d = $input.first().json;\nconst noticias = Array.isArray(d.noticias) ? d.noticias : [];\nconst g = d.gancho || {};\n\n// O texto de slide precisa caber em uma linha: a descricao do card usa\n// '### N | PAPEL | titulo' + uma linha de texto, e uma quebra aqui partiria\n// o slide em dois na hora do parse.\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\n\nconst slides = [];\n\n// 1. capa: fato da semana + chamada fixa\nslides.push({\n  papel: 'gancho',\n  titulo: umaLinha(g.titulo),\n  texto: `${umaLinha(g.texto)} ${CHAMADA_CAPA}`.trim()\n});\n\n// 2. indice: as etiquetas das noticias que realmente entraram, na ordem em que\n// aparecem. Montado a partir da lista final, entao nao tem como dessincronizar.\n// Nao anuncia quantidade de proposito: o slide nao promete um numero.\nconst rotulos = noticias.map(n => umaLinha(n.rotulo_indice)).filter(r => r);\nslides.push({\n  papel: 'contexto',\n  // 'Índice' e nao 'Nessa edição': o titulo do modelo de indice tem espaco para 6 letras.\n  titulo: 'Índice',\n  texto: rotulos.join(' · ')\n});\n\n// 3. uma noticia por slide\nnoticias.forEach(n => {\n  slides.push({\n    papel: 'desenvolvimento',\n    titulo: umaLinha(n.manchete),\n    texto: umaLinha(n.texto_slide)\n  });\n});\n\n// 4. fechamento fixo\nslides.push({\n  papel: 'cta',\n  titulo: 'Toda semana tem',\n  texto: `As fontes estão na legenda. Segue o ${PERFIL} pra não perder o resumo da próxima semana. Mais em ${SITE}.`\n});\n\n// O indice cresce com o numero de noticias e pode estourar a arte.\nconst avisos = Array.isArray(d.avisos) ? d.avisos.slice() : [];\nconst tamIndice = slides[1].texto.length;\nif (tamIndice > 160) {\n  avisos.push(`slide de indice com ${tamIndice} chars -- encurtar os rotulos das noticias antes de gerar a arte`);\n}\n\nreturn [{ json: { ...d, slides, avisos } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2020,
+        160
+      ],
+      "id": "c0f311ab-b896-587f-82b8-df8bfaf254a3",
+      "name": "Monta slides do carrossel",
+      "notes": "Chamada fixa da capa e texto do CTA vivem so aqui."
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONTRATO COM O FLUXO DE DESIGN\n// A descricao do card pai e a fonte unica de verdade. O fluxo de design le esta\n// descricao e corta pelos cabecalhos '## ' abaixo -- os mesmos usados nos fluxos\n// de segunda e quarta, para um parser so atender os tres. Se voce editar o texto\n// no Trello durante a revisao, edite DENTRO das secoes: nao apague nem renomeie\n// os cabecalhos, senao o parser do design nao encontra nada.\n//\n// Cada slide vem marcado com o papel narrativo (GANCHO / CONTEXTO /\n// DESENVOLVIMENTO / CTA). O papel escolhe o layout na hora da arte, entao nao\n// remova o slide de CTA nem troque a ordem dos papeis na revisao.\n//\n// SOBRE AS FONTES: os links existem em UM lugar so, a secao '## FONTES'.\n// A publicacao anexa esse bloco no fim de cada legenda. Por isso as legendas\n// aqui terminam com um marcador -- e lembrete de que o texto publicado vai ser\n// maior que o que voce ve, e de que corrigir um link e corrigir um lugar so.\n\nconst d = $input.first().json;\n\nconst MARCADOR = '>> Na publicacao, o bloco FONTES entra aqui.';\n\nconst noticias = d.noticias\n  .map((n, i) => {\n    const alerta = n.link_confirmado ? '' : '  [LINK NAO CONFIRMADO]';\n    return `### ${i + 1} | ${n.manchete}${alerta}\\nFonte: ${n.fonte}\\nPor que importa: ${n.por_que_importa}\\n${n.resumo}`;\n  })\n  .join('\\n\\n');\n\nconst slides = d.slides\n  .map((s, i) => `### ${i + 1} | ${String(s.papel || '').toUpperCase()} | ${s.titulo}\\n${s.texto}`)\n  .join('\\n\\n');\n\n// Linha comecando com '#' vira titulo no markdown do Trello e a primeira\n// hashtag some da tela. A barra invertida escapa; o parser do design remove.\nconst hashtags = d.hashtags.join(' ').replace(/^#/, '\\\\#');\n\n// Os prompts de imagem ficam no card para conferencia: e deles que a arte sai.\nconst prompts = d.noticias\n  .map((n, i) => `${i + 1}. ${n.prompt_imagem || '(sem prompt: a automacao usa um generico)'}`)\n  .join('\\n');\n\nconst fontes = d.noticias\n  .map(n => `${n.fonte}: ${n.link}`)\n  .join('\\n');\n\nconst partes = [];\n\n// O alerta de capa vem antes de tudo: e o unico erro deste post que aparece na\n// primeira tela para quem esta rolando o feed.\nif (d.capa_suspeita) {\n  partes.push('**[CONFERIR CAPA] A noticia da capa nao foi confirmada nos feeds. Validar antes de aprovar.**', '');\n}\n\npartes.push(\n  d.titulo_edicao,\n  '',\n  `${d.total_noticias} noticias nesta edicao.`,\n  '',\n  '## NOTICIAS',\n  noticias,\n  '',\n  '## SLIDES',\n  slides,\n  '',\n  '## LEGENDA INSTAGRAM',\n  d.legendas.instagram,\n  MARCADOR,\n  '',\n  '## LEGENDA FACEBOOK',\n  d.legendas.facebook,\n  MARCADOR,\n  '',\n  '## LEGENDA LINKEDIN',\n  d.legendas.linkedin,\n  MARCADOR,\n  '',\n  '## HASHTAGS',\n  hashtags,\n  '',\n  '## PROMPTS DE IMAGEM',\n  prompts,\n  '',\n  '## FONTES',\n  fontes\n);\n\nif (d.avisos && d.avisos.length) {\n  partes.push('', '## AVISOS DA AUTOMACAO', d.avisos.map(a => `- ${a}`).join('\\n'));\n}\n\nreturn [{\n  json: {\n    ...d,\n    descricao: partes.join('\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        160
+      ],
+      "id": "a53f6134-2483-5f60-9a4d-99e2252fb473",
+      "name": "Monta descricao do card"
+    },
+    {
+      "parameters": {
+        "listId": "6a58788f7a2e4212ebe645fc",
+        "name": "={{ $json.prefixo_titulo }}Noticias da Semana | {{ $json.tema_card }}",
+        "description": "={{ $json.descricao }}",
+        "additionalFields": {
+          "idLabels": "6a58788f7a2e4212ebe64607"
+        }
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        2460,
+        160
+      ],
+      "id": "6982d41f-ae3e-5a39-be06-42079df1a17d",
+      "name": "Trello - Criar card",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "notes": "Unico card criado por execucao. O prefixo '[CONFERIR CAPA] ' aparece no titulo quando a noticia da capa nao foi confirmada nos feeds."
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "name": "Producao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        2680,
+        0
+      ],
+      "id": "8c6428f6-d628-5c9b-a2c6-7dae9230f900",
+      "name": "Checklist Producao",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Depois do node de checklist, $json e o objeto da checklist -- entao $json.id\n// e o checklistId. Um item entra e um item sai: sem risco de pareamento.\nconst checklistId = $input.first().json.id;\n\n// Noticia envelhece rapido e link errado destroi a credibilidade da pagina:\n// por isso a conferencia das fontes vem antes da arte.\nconst tarefas = [\n  'Conferir se as noticias ainda estao atuais',\n  'Abrir e validar cada link da secao FONTES',\n  'Ler so o slide 1: o fato da capa esta correto e e o mais forte da semana?',\n  'Conferir se a capa fala da primeira noticia do carrossel',\n  'Revisar o slide de indice: os rotulos dizem o assunto sem spoiler?',\n  'Revisar as tres legendas',\n  'Aprovar texto (mover card para Aprovado)',\n  'Conferir os cards gerados (a pasta vem num comentario deste card)',\n  'Aprovar arte',\n  'Publicar nas tres redes'\n];\n\nreturn [{ json: { checklistId, tarefas } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        0
+      ],
+      "id": "7e965c77-dbd4-5592-983b-e34a41ee9863",
+      "name": "Tarefas de producao"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tarefas",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        0
+      ],
+      "id": "48e02714-eaad-5eb0-b448-733ba7c5c851",
+      "name": "Split Out tarefas"
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "createCheckItem",
+        "checklistId": "={{ $json.checklistId }}",
+        "name": "={{ $json.tarefas }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        3340,
+        0
+      ],
+      "id": "f9555427-92f6-5020-8dc2-15bfdb9e5630",
+      "name": "Create checklist item",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transforma a lista de noticias do post em UMA LINHA POR NOTICIA.\n// O node Data Table seguinte roda uma vez por item recebido, entao esse Code\n// e o que faz a memoria de sexta gravar 4-6 registros em vez de 1.\nconst dados = $('Normaliza noticias').first().json;\nconst noticias = Array.isArray(dados.noticias) ? dados.noticias : [];\n\nreturn noticias.map(n => ({\n  json: {\n    titulo: n.titulo_memoria,\n    titulo_normalizado: n.titulo_normalizado,\n    link: n.link,\n    fonte: n.fonte,\n    data: dados.data,\n    status: dados.status\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        200
+      ],
+      "id": "c2802b84-de57-5c98-8e7b-2787890cbd57",
+      "name": "Preparar linhas da memoria"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "xFQUooyLz6dzOA8Z",
+          "mode": "list",
+          "cachedResultName": "noticias_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/xFQUooyLz6dzOA8Z"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "titulo": "={{ $json.titulo }}",
+            "titulo_normalizado": "={{ $json.titulo_normalizado }}",
+            "link": "={{ $json.link }}",
+            "fonte": "={{ $json.fonte }}",
+            "data": "={{ $json.data }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "titulo_normalizado",
+              "displayName": "titulo_normalizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "fonte",
+              "displayName": "fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2900,
+        200
+      ],
+      "id": "7bf24643-1bc5-56c1-b4b7-c0231cb6fcf5",
+      "name": "Memoria - gravar",
+      "notes": "Grava 1 linha por noticia. A tabela noticias_ia precisa ter as 6 colunas listadas aqui."
+    },
+    {
+      "parameters": {
+        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma a edicao que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_comum, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Monta slides do carrossel': o que esta no card do Trello e o\n// que vai para a arte. Ordem dos cards: capa, indice, uma noticia por card, encerramento.\nconst cfg = $('Configuração').first().json;\nconst d = $('Monta slides do carrossel').first().json;\nconst noticias = Array.isArray(d.noticias) ? d.noticias : [];\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\n\nconst capa = doPapel('gancho')[0] || { titulo: '', texto: '' };\nconst indice = doPapel('contexto')[0] || { titulo: 'Índice' };\nconst corpo = doPapel('desenvolvimento');\nconst fim = doPapel('cta')[0] || { titulo: '', texto: '' };\n\nconst cards = [];\nconst imagens = [];\n\ncards.push({ modelo: 'capa', campos: { titulo: capa.titulo, corpo: capa.texto } });\n\n// O modelo de indice do news tem 6 itens (item_1 a item_6). Com mais noticias, fica de fora.\nif (noticias.length <= 6) {\n  const campos = { titulo: indice.titulo };\n  noticias.forEach((n, i) => { campos['item_' + (i + 1)] = umaLinha(n.rotulo_indice || n.manchete); });\n  cards.push({ modelo: 'indice', campos });\n}\n\nnoticias.forEach((n, i) => {\n  const s = corpo[i] || { titulo: umaLinha(n.manchete), texto: umaLinha(n.texto_slide) };\n  cards.push({ modelo: 'texto-com-imagem', campos: { titulo: s.titulo, corpo: s.texto } });\n  const prompt = umaLinha(n.prompt_imagem) ||\n    'an editorial illustration about artificial intelligence news, ' + umaLinha(n.rotulo_indice || n.manchete);\n  imagens.push({\n    card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n    mascara: 'imagem_1',\n    nome_arquivo: 'noticia-' + String(i + 1).padStart(2, '0') + (slug(n.rotulo_indice) ? '-' + slug(n.rotulo_indice) : ''),\n    prompt,\n  });\n});\n\ncards.push({ modelo: 'encerramento', campos: { titulo: fim.titulo, corpo: fim.texto } });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  nome: ('Notícias IA ' + data + ' ' + umaLinha(d.tema_card)).trim().slice(0, 80),\n  estilo_comum: cfg.estilo_comum || '',\n  entrada: { serie: cfg.serie, data, assunto: cfg.assunto, marca: cfg.marca, cards },\n  imagens,\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Montar entrada dos cards",
+      "id": "786ac91c-51ed-54b0-b2d7-3d6e67832287",
+      "position": [
+        480,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  estilo_comum: (dados.estilo_comum || '').trim(),\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
+      },
+      "id": "8ff5d995-09d0-5ce5-9b2f-e99326a894f3",
+      "name": "Validar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "286b9234-dfac-539d-8b66-f33bc2871d0e",
+      "name": "Subir gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        760
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.espera_subir_s }}",
+        "unit": "seconds"
+      },
+      "id": "7bb51f8e-3a3d-55c9-a3d6-626d021f38c9",
+      "name": "Esperar gerador subir",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        720
+      ],
+      "webhookId": "fd8e06ba-cc3c-5185-bbc8-1f648c22339a"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/health",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "8654febf-8c47-5eba-a168-18703d01df40",
+      "name": "Consultar saúde do gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        720
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 6,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d6518891-c771-54c3-bbb5-01952a3afe72",
+              "leftValue": "={{ $json.ready === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0d7b878b-173d-545a-9213-8701accee2aa",
+      "name": "Gerador pronto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = v.estilo_comum ? im.prompt.trim() + ', ' + v.estilo_comum : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
+      },
+      "id": "26b313ea-2ecc-56da-b0cb-fd5d7cdfd79d",
+      "name": "Montar pedidos de imagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/jobs/free",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json; charset=utf-8",
+        "body": "={{ JSON.stringify($json.corpo) }}"
+      },
+      "id": "dd361dd2-fa0d-55cb-8d96-56b66b41a2e0",
+      "name": "Enfileirar imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        720
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const pedidos = $('Montar pedidos de imagem').all();\nconst respostas = $input.all();\nconst tickets = respostas.map((r, i) => ({\n  ticket: r.json.ticket,\n  card: pedidos[i].json.card,\n  mascara: pedidos[i].json.mascara,\n  nome_arquivo: pedidos[i].json.nome_arquivo,\n}));\nreturn [{ json: { tickets, total: tickets.length, iniciado_em: Date.now() } }];"
+      },
+      "id": "2f917b7a-fba6-5d6a-9401-18bc71d20ec8",
+      "name": "Reunir tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.intervalo_consulta_s }}",
+        "unit": "seconds"
+      },
+      "id": "fc60c0b3-ac8d-5aa3-a46d-1ba818528740",
+      "name": "Esperar geração",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1160
+      ],
+      "webhookId": "946b114d-4389-5fd8-82d6-b4ad1b984a58"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/status?tickets={{ $('Reunir tickets').first().json.tickets.map(t => t.ticket).join(',') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "43e142ee-a9c7-5593-9164-3aa10d3a3d67",
+      "name": "Consultar andamento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        1160
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('Reunir tickets').first().json;\nconst cfg = $('Validar entrada').first().json.cfg;\nconst jobs = $input.first().json.jobs || {};\nconst cont = { queued: 0, running: 0, completed: 0, failed: 0, outro: 0 };\nconst falhas = [];\nfor (const t of r.tickets) {\n  const j = jobs[t.ticket] || { status: 'not_found' };\n  if (j.status in cont) cont[j.status]++; else cont.outro++;\n  if (j.status === 'failed' || j.status === 'not_found') {\n    falhas.push('card ' + t.card + ' (' + t.nome_arquivo + '): ' + (j.error || j.status));\n  }\n}\nconst minutos = Math.round((Date.now() - r.iniciado_em) / 6000) / 10;\nlet estado = 'esperando';\nlet motivo = '';\nif (falhas.length) {\n  estado = 'falhou';\n  motivo = 'Falha ao gerar imagem: ' + falhas.join(' | ');\n} else if (cont.completed === r.total) {\n  estado = 'concluido';\n} else if (minutos > cfg.tempo_maximo_geracao_min) {\n  estado = 'tempo_esgotado';\n  motivo = 'As imagens passaram de ' + cfg.tempo_maximo_geracao_min + ' min e ainda faltam ' + (r.total - cont.completed) + '.';\n}\nreturn [{ json: { estado, motivo, minutos, total: r.total, ...cont } }];"
+      },
+      "id": "4d8d1080-b7bc-5da3-9260-e58e85bd0a55",
+      "name": "Avaliar andamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "2ddfc257-d2e8-56f6-9354-fe0bab8b18f9",
+              "leftValue": "={{ $json.estado === 'concluido' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "16e7f238-d2a4-568d-b7a3-c23f902a3ee3",
+      "name": "Imagens prontas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5e48930c-fc2a-58b6-8d09-3ac52ebf0edf",
+              "leftValue": "={{ $json.estado === 'esperando' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7c2efe67-3a49-5dc2-a92e-38150044ff36",
+      "name": "Ainda gerando?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Reunir tickets').first().json.tickets.map(t => ({ json: t }));"
+      },
+      "id": "06b6a141-bd9c-5b24-be14-4702ea438431",
+      "name": "Listar tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/jobs/{{ $json.ticket }}/result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "d9728077-1e45-520c-8567-7094aa6f86ba",
+      "name": "Buscar caminho da imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        1160
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst tickets = $('Listar tickets').all();\nconst resultados = $input.all();\nconst imagens = [];\nconst problemas = [];\nresultados.forEach((r, i) => {\n  const t = tickets[i].json;\n  const caminho = r.json.output_path;\n  if (!r.json.ready || !caminho) {\n    problemas.push('card ' + t.card + ' (' + t.nome_arquivo + '): imagem sem caminho de arquivo');\n  } else {\n    imagens.push({ card: t.card, mascara: t.mascara, caminho });\n  }\n});\nif (problemas.length) return [{ json: { ok: false, motivo: problemas.join(' | ') } }];\nreturn [{ json: { ok: true, pedido: {\n  versao: 1,\n  nome: v.nome,\n  entrada: v.entrada,\n  imagens,\n  exportacao: { formatos: ['png'], escalas: [1] },\n} } }];"
+      },
+      "id": "25d8385d-863a-50e7-a2b5-fc90dee791a0",
+      "name": "Montar pedido de produção",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "f8cceb6c-a585-5f34-88fc-da532adc79db",
+              "leftValue": "={{ $json.ok === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "21990036-a56e-5185-af18-eda991a9a94f",
+      "name": "Pedido pronto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4a0c9d9b-1422-5860-badd-57f789adb39c",
+      "name": "Parar gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        1160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4dfbbf38-46df-5154-8a33-277ce7f15541",
+      "name": "Subir gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        1160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.espera_subir_s }}",
+        "unit": "seconds"
+      },
+      "id": "a4f8422c-3e0d-565a-a730-73032ed195a2",
+      "name": "Esperar gerenciador subir",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        1120
+      ],
+      "webhookId": "47b8d209-8cc3-5bc1-8e62-db0f59b9de5b"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "5603fee4-42ff-5136-a7e9-b658ecd6fdec",
+      "name": "Consultar saúde do gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        1520
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 8,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/integracao/producao",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json; charset=utf-8",
+        "body": "={{ JSON.stringify($('Montar pedido de produção').first().json.pedido) }}"
+      },
+      "id": "915304aa-aaef-58a8-9ab9-59e30ab041e8",
+      "name": "Produzir cards",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        1520
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst arquivos = (r.arquivos || []);\nreturn [{ json: {\n  ok: r.ok === true,\n  pasta: r.pasta,\n  geracao_id: r.geracao_id,\n  quantidade: arquivos.length,\n  arquivos: arquivos.map(a => a.caminho),\n  avisos: (r.avisos || []).map(a => (a.rotulo ? a.rotulo + ': ' : '') + a.mensagem),\n} }];"
+      },
+      "id": "13b6c3bd-5732-5ab6-b439-2c8998d3a358",
+      "name": "Montar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4f1cc466-2478-5bf9-87c2-cfff3a5ec596",
+      "name": "Parar gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        1520
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Devolve o resultado da produção (os nós anteriores só desligaram o servidor e comentaram no Trello).\nconst t = $('Trello - Criar card').first().json;\nreturn [{ json: { ...$('Montar resultado').first().json, trello: t.shortUrl || t.url || t.id } }];"
+      },
+      "id": "09edf403-ed3e-578c-8622-0afd9f4e8ddd",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nlet msg;\nif (j.motivo) {\n  msg = j.motivo;\n} else if (j.ready === false) {\n  msg = 'O gerador subiu, mas não está pronto: ' + (j.problems || []).join(' | ');\n} else if (j.error) {\n  const e = j.error;\n  msg = (e.message || JSON.stringify(e)) + (e.description ? ' — ' + e.description : '');\n} else if (j.stdout) {\n  msg = j.stdout;\n} else {\n  msg = 'Falha sem detalhe: ' + JSON.stringify(j).slice(0, 500);\n}\nreturn [{ json: { mensagem: msg } }];"
+      },
+      "id": "10765dec-d6d7-548e-a151-3ecf54079645",
+      "name": "Montar mensagem de falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2480,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "bb4fdf4e-6fff-54f0-ace2-b47ad1535c41",
+      "name": "Parar todos os servidores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2720,
+        1520
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "={{ $('Montar mensagem de falha').first().json.mensagem }}"
+      },
+      "id": "e15bfbcc-6f6b-595d-a771-28796dea8f54",
+      "name": "Falha no fluxo",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "cardComment",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Trello - Criar card').first().json.id }}"
+        },
+        "text": "={{ (() => {\n  const r = $('Montar resultado').first().json;\n  const linhas = ['Cards gerados automaticamente: ' + r.quantidade + ' imagens.', '', 'Pasta no computador:', r.pasta];\n  if (r.avisos && r.avisos.length) linhas.push('', 'Avisos do gerenciador:', ...r.avisos.map(a => '- ' + a));\n  return linhas.join('\\n').slice(0, 15000);\n})() }}"
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "name": "Trello - comentar cards prontos",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "id": "402a2174-79b9-518c-855a-07a3ae9b8652",
+      "position": [
+        960,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "cardComment",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Trello - Criar card').first().json.id }}"
+        },
+        "text": "={{ (() => {\n  const msg = $('Montar mensagem de falha').first().json.mensagem;\n  const e = $('Montar entrada dos cards').first().json;\n  const entrada = JSON.stringify({ versao: 1, nome: e.nome, estilo_comum: e.estilo_comum, entrada: e.entrada, imagens: e.imagens }, null, 2);\n  return ['A arte NAO foi gerada: ' + msg, '',\n    'O texto deste card continua valendo. Para gerar so a arte depois: salve o JSON abaixo como',\n    'entradas/<nome>.json no computador e rode o workflow \"Notícias IA · 2. Arte (imagens + cards)\" com',\n    'esse nome em Configuração > arquivo_entrada.', '', '```', entrada, '```'].join('\\n').slice(0, 15000);\n})() }}"
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "name": "Trello - comentar falha",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "id": "5a024f50-37cf-535f-8b1a-93d7e17e4a36",
+      "position": [
+        2960,
+        1520
+      ]
+    }
+  ],
+  "connections": {
+    "Toda sexta 15h": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Memoria - ler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria - ler": {
+      "main": [
+        [
+          {
+            "node": "Lista de feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista de feeds": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Read": {
+      "main": [
+        [
+          {
+            "node": "Filtra e cruza memoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra e cruza memoria": {
+      "main": [
+        [
+          {
+            "node": "IF - Tem noticia suficiente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Tem noticia suficiente?": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Noticias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sem noticia nova",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Noticias",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Noticias": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "IF - Parse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Parse OK?": {
+      "main": [
+        [
+          {
+            "node": "Normaliza noticias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse falhou",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza noticias": {
+      "main": [
+        [
+          {
+            "node": "Monta slides do carrossel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta slides do carrossel": {
+      "main": [
+        [
+          {
+            "node": "Monta descricao do card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta descricao do card": {
+      "main": [
+        [
+          {
+            "node": "Trello - Criar card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - Criar card": {
+      "main": [
+        [
+          {
+            "node": "Checklist Producao",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Preparar linhas da memoria",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar entrada dos cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checklist Producao": {
+      "main": [
+        [
+          {
+            "node": "Tarefas de producao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tarefas de producao": {
+      "main": [
+        [
+          {
+            "node": "Split Out tarefas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out tarefas": {
+      "main": [
+        [
+          {
+            "node": "Create checklist item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar linhas da memoria": {
+      "main": [
+        [
+          {
+            "node": "Memoria - gravar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar entrada dos cards": {
+      "main": [
+        [
+          {
+            "node": "Validar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar entrada": {
+      "main": [
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerador": {
+      "main": [
+        [
+          {
+            "node": "Esperar gerador subir",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar gerador subir": {
+      "main": [
+        [
+          {
+            "node": "Consultar saúde do gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar saúde do gerador": {
+      "main": [
+        [
+          {
+            "node": "Gerador pronto?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerador pronto?": {
+      "main": [
+        [
+          {
+            "node": "Montar pedidos de imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar pedidos de imagem": {
+      "main": [
+        [
+          {
+            "node": "Enfileirar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enfileirar imagem": {
+      "main": [
+        [
+          {
+            "node": "Reunir tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reunir tickets": {
+      "main": [
+        [
+          {
+            "node": "Esperar geração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar geração": {
+      "main": [
+        [
+          {
+            "node": "Consultar andamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar andamento": {
+      "main": [
+        [
+          {
+            "node": "Avaliar andamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar andamento": {
+      "main": [
+        [
+          {
+            "node": "Imagens prontas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagens prontas?": {
+      "main": [
+        [
+          {
+            "node": "Listar tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ainda gerando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ainda gerando?": {
+      "main": [
+        [
+          {
+            "node": "Esperar geração",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar tickets": {
+      "main": [
+        [
+          {
+            "node": "Buscar caminho da imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar caminho da imagem": {
+      "main": [
+        [
+          {
+            "node": "Montar pedido de produção",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar pedido de produção": {
+      "main": [
+        [
+          {
+            "node": "Pedido pronto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedido pronto?": {
+      "main": [
+        [
+          {
+            "node": "Parar gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar gerador": {
+      "main": [
+        [
+          {
+            "node": "Subir gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Esperar gerenciador subir",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar gerenciador subir": {
+      "main": [
+        [
+          {
+            "node": "Consultar saúde do gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar saúde do gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Produzir cards",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produzir cards": {
+      "main": [
+        [
+          {
+            "node": "Montar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resultado": {
+      "main": [
+        [
+          {
+            "node": "Parar gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagem de falha": {
+      "main": [
+        [
+          {
+            "node": "Parar todos os servidores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Trello - comentar cards prontos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - comentar cards prontos": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar todos os servidores": {
+      "main": [
+        [
+          {
+            "node": "Trello - comentar falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - comentar falha": {
+      "main": [
+        [
+          {
+            "node": "Falha no fluxo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

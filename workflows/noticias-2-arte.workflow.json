@@ -1,9 +1,9 @@
 {
-  "name": "Notícias IA — 10 imagens + cards",
+  "name": "Notícias IA · 2. Arte (imagens + cards)",
   "nodes": [
     {
       "parameters": {
-        "content": "## Notícias IA: 10 imagens + cards\n**Fluxo (tudo pela ponte, porque o n8n está no Docker):** sobe o gerador de imagens → pede as 10 imagens → espera → desliga o gerador → sobe o gerenciador de carrosséis → produz os cards → desliga o gerenciador → devolve a pasta.\n\n**Antes de rodar:** deixe a **ponte** ligada no computador (`python3 scripts/ponte.py`) e cole o token dela no nó **Configuração**. Detalhes no README da pasta `iaclube_orquestracao_n8n`.\n\n**Resultado:** a saída do último nó (**Entregar resultado**) traz `pasta` e `arquivos` (caminhos no computador).\n\n**Se algo falhar:** o ramo vermelho desliga os dois servidores e mostra o motivo.",
+        "content": "## Notícias IA · 2. Arte (imagens + cards)\n**Fluxo (tudo pela ponte, porque o n8n está no Docker):** sobe o gerador de imagens → pede as imagens → espera → desliga o gerador → sobe o gerenciador de carrosséis → produz os cards → desliga o gerenciador → devolve a pasta.\n\n**Antes de rodar:** deixe a **ponte** ligada no computador (`python3 scripts/ponte.py`) e cole o token dela no nó **Configuração**. Detalhes no README da pasta `iaclube_orquestracao_n8n`.\n\n**Resultado:** a saída do último nó (**Entregar resultado**) traz `pasta` e `arquivos` (caminhos no computador).\n\n**Se algo falhar:** o ramo vermelho desliga os dois servidores e mostra o motivo.",
         "height": 330,
         "width": 520,
         "color": 4

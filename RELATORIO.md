@@ -28,7 +28,7 @@ O motor `sd-cli` não abre porta. Não achei 8999 nem 17999 em nenhum dos reposi
 
 ### 3. Esta pasta (`iaclube_orquestracao_n8n`)
 ```
-workflows/noticias-10-cards.workflow.json   workflow (33 nós), para importar no n8n
+workflows/noticias-10-cards.workflow.json   workflow (33 nós), para importar no n8n (hoje noticias-2-arte.workflow.json)
 entradas/exemplo-noticias-10.json           12 cards (capa + 10 notícias + encerramento) e 10 prompts de imagem
 scripts/servidor.sh                         sobe/para/consulta os dois servidores (grupo de processos, PID e log)
 scripts/ponte.py                            serviço HTTP no computador: sobe/para servidores, entrega as entradas e repassa a API
