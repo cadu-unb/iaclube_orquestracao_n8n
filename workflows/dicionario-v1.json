@@ -1,0 +1,577 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "content": "##Fluxo 1 - dicionario IA \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        256
+      ],
+      "id": "82b42608-f340-4fe9-b0e9-103c4d7a71cb",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2080,
+        976
+      ],
+      "id": "b81aeeef-e839-4047-bb8e-bfac2e155541",
+      "name": "Schedule Trigger1",
+      "notes": "triggerAtDay 1 = segunda. Mudado de [5] para nao concorrer com o fluxo de Noticias (sexta 15h) pelo mesmo TPM da OpenAI."
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fnXU9hc4jy1TdS3t",
+          "mode": "list",
+          "cachedResultName": "dicionario_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/fnXU9hc4jy1TdS3t"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1872,
+        976
+      ],
+      "id": "06f6cb12-0ba6-4f51-a2da-c225972ae10d",
+      "name": "Get row(s)1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traz todos os termos ja usados; se a tabela estiver vazia, retorna lista vazia (sem quebrar).\nconst linhas = $input.all().map(item => item.json);\n\nconst usados = linhas\n  .map(l => l.termo)\n  .filter(t => t);\n\nconst usadosNormalizados = linhas\n  .map(l => l.termo_normalizado || l.termo)\n  .filter(t => t);\n\nreturn [{\n  json: {\n    termos_usados: usados.join(', ') || 'nenhum ainda',\n    termos_normalizados: usadosNormalizados\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1664,
+        976
+      ],
+      "id": "0b02e3e0-324d-4095-99bd-5bf26bb4cb04",
+      "name": "Memoria Termos1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-pro",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-pro"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1456,
+        816
+      ],
+      "id": "b3de9f11-1781-45b9-990c-652b408a0f5a",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Qi02ZAkvb1kjIeTU",
+          "name": "OpenAI account"
+        }
+      },
+      "notes": "maxTokens 8000: a saida real e um JSON de ~1.2k tokens, o resto e folga para o raciocinio do modelo. Sem esse teto a OpenAI reserva o maximo do modelo e isso conta inteiro contra o limite de tokens por minuto (TPM)."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voce e o redator de conteudo do IAClube, uma pagina educativa sobre inteligencia\nartificial no Instagram, Facebook e LinkedIn.\n\nPERSONALIDADE DA MARCA\n- Tom explicativo e amigavel, como um amigo que entende de IA explicando pra outro\n- Nunca soa academico, arrogante ou robotico\n- Evita jargao sem explicar; quando usa um termo tecnico, explica na hora\n- Publico-alvo: pessoas de 18 a 30 anos, a maioria com conhecimento basico de\n  ferramentas de IA, mas parte do publico ja e intermediario/avancado -- por isso,\n  a explicacao tem que ser simples sem ser rasa: alguem que ja manja tambem\n  precisa achar interessante\n\nSUA TAREFA HOJE\nEscolher UM termo ou conceito de inteligencia artificial que ainda nao foi\nexplicado na pagina, e criar o roteiro de um post \"Dicionario IA\" -- carrossel\nde 4 a 6 slides escritos por voce (a automacao adiciona mais um no fim).\n\nTERMOS JA USADOS (nao repita nenhum destes):\n{{ $json.termos_usados }}\n\nREGRAS DE CONTEUDO\n- Escolha um termo relevante e atual (ex: \"fine-tuning\", \"alucinacao\", \"token\",\n  \"prompt injection\", \"RAG\", \"context window\") -- evite termos obvios demais\n  como \"o que e IA\"\n- A explicacao deve ser 100% baseada no seu conhecimento -- nao e necessario\n  pesquisar, ja que conceitos fundamentais de IA nao mudam de uma semana pra outra\n- Use uma analogia ou exemplo do dia a dia pra tornar o conceito concreto\n- Cada slide deve ter uma ideia so -- nao amontoe informacao\n\nESTRUTURA DO CARROSSEL (obrigatoria)\nCada slide tem um campo \"papel\", e o valor precisa ser exatamente um destes\ntres: \"gancho\", \"contexto\" ou \"desenvolvimento\". A ordem no array e sempre esta:\n\n1. \"gancho\" -- exatamente 1 slide, sempre o primeiro.\n   E a unica coisa que a pessoa ve antes de decidir se para ou continua rolando.\n   Ele NAO explica: ele abre uma tensao que so o resto do carrossel resolve.\n   Escolha uma destas entradas: uma afirmacao contraintuitiva, um erro comum que\n   quase todo mundo comete, uma pergunta que a pessoa nao consegue responder, ou\n   um custo concreto de nao saber aquilo.\n   Nao comece com \"voce sabe o que e X?\", \"hoje vamos falar sobre X\" nem\n   \"X: entenda de uma vez\" -- isso e titulo de aula, nao gancho.\n   O termo pode aparecer, mas a curiosidade nao pode depender de a pessoa ja\n   conhece-lo.\n\n2. \"contexto\" -- exatamente 1 slide, sempre o segundo.\n   Fecha em parte a tensao do gancho e nomeia o assunto. Aqui entra o termo e a\n   primeira nocao do que ele significa, em uma frase. Nao entregue a explicacao\n   inteira: entregue o suficiente para ficar claro que vale continuar.\n\n3. \"desenvolvimento\" -- de 2 a 4 slides, na sequencia, ate o fim do array.\n   E onde a explicacao acontece: a analogia do dia a dia, como funciona por\n   dentro, onde a pessoa ja esbarra nisso sem perceber, o erro tipico de quem\n   nao entende. Uma ideia por slide.\n\nNAO escreva slide de despedida, agradecimento, \"siga a pagina\" ou qualquer\nfechamento. O ultimo slide e um CTA fixo que a automacao adiciona sozinha --\nse voce escrever um, ele vai aparecer duplicado.\n\nCOMO SEGURAR A ATENCAO\n- Cada slide responde a pergunta que o slide anterior abriu e abre uma nova. Se\n  a pessoa puder parar no slide 3 sem sentir que ficou faltando algo, o\n  carrossel esta mal construido\n- Frases curtas. Segunda pessoa (\"voce ja fez isso\") em vez de impessoal\n  (\"e comum que se faca\")\n- No maximo UMA vez no carrossel inteiro voce pode mandar a pessoa arrastar\n  (\"arrasta pro lado\"). Retencao vem de curiosidade, nao de instrucao\n- Numero, exemplo concreto e nome de ferramenta prendem mais que adjetivo\n  (\"mais rapido\", \"muito util\", \"revolucionario\")\n- O slide mais fraco define quanta gente chega no fim: se um slide so repete o\n  anterior com outras palavras, corte ele e faca um a menos\n\nLIMITES DE CARACTERE (obrigatorios, o template de arte depende disso)\n- gancho: titulo ate 40, texto ate 90. O gancho e curto de proposito --\n  texto longo na capa e o jeito mais rapido de perder o leitor\n- contexto: titulo ate 40, texto entre 80 e 160\n- desenvolvimento: titulo ate 40, texto entre 90 e 180, com comprimento\n  parecido entre eles\n- definicao_curta: ate 200 caracteres (nao vai para a arte, e o resumo do card)\n\nAS TRES LEGENDAS\nO carrossel e o MESMO nas tres redes. A unica coisa que muda e a legenda.\nEscreva as tres descrevendo a mesma peca, sem inventar conteudo diferente:\n- instagram: curta e envolvente, 1-2 emojis, termina com pergunta ou\n  call-to-action leve. Ate 600 caracteres\n- facebook: adaptacao da do Instagram, um pouco mais explicativa e com menos\n  dependencia de emoji, ja que o feed do Facebook favorece texto. Ate 800 caracteres\n- linkedin: mais analitica, sem emojis, tom profissional, pode trazer uma\n  implicacao pratica ou de mercado. Ate 1200 caracteres\nA legenda pode convidar a seguir a pagina e citar o iaclube.help, mas nao\nrepita palavra por palavra o texto do slide de CTA.\n\nFORMATO DE SAIDA\nResponda APENAS com um JSON valido, sem nenhum texto antes ou depois, sem\nblocos de codigo markdown. Siga exatamente esta estrutura:\n\n{\n  \"termo\": \"nome do termo em poucas palavras\",\n  \"definicao_curta\": \"1-2 frases explicando o termo de forma simples\",\n  \"slides\": [\n    {\"papel\": \"gancho\", \"titulo\": \"titulo curto\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"contexto\", \"titulo\": \"titulo curto\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo\": \"titulo curto\", \"texto\": \"texto do slide\"}\n  ],\n  \"legendas\": {\n    \"instagram\": \"...\",\n    \"facebook\": \"...\",\n    \"linkedin\": \"...\"\n  },\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"tema_card\": \"titulo curto que identifica essa peca de conteudo\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1456,
+        976
+      ],
+      "id": "a966f847-e497-494a-9888-5a4e670b8fdf",
+      "name": "AI Agent - Dicionario IA1",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "retryOnFail com 20s de espera: cobre o 429 de rate limit da OpenAI, que se resolve sozinho na janela seguinte de 1 minuto."
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const raw = $input.first().json.output;\n\n  // A IA as vezes envolve o JSON em blocos de codigo markdown (```json ... ```).\n  const clean = String(raw).replace(/```json|```/g, '').trim();\n  const parsed = JSON.parse(clean);\n\n  // ---------- 1) CONTRATO MINIMO ----------\n  const faltando = [];\n  if (!parsed.termo) faltando.push('termo');\n  if (!parsed.tema_card) faltando.push('tema_card');\n  if (!parsed.definicao_curta) faltando.push('definicao_curta');\n  if (!Array.isArray(parsed.slides) || parsed.slides.length === 0) faltando.push('slides');\n  if (!parsed.legendas) faltando.push('legendas');\n  else {\n    for (const rede of ['instagram', 'facebook', 'linkedin']) {\n      if (!parsed.legendas[rede]) faltando.push('legendas.' + rede);\n    }\n  }\n  if (faltando.length) {\n    return [{ json: { erro: true, mensagem: 'Campos ausentes: ' + faltando.join(', '), bruto: clean } }];\n  }\n\n  const avisos = [];\n\n  // ---------- 2) NORMALIZACAO DE PAPEIS ----------\n  // A estrutura narrativa e o ponto do post, entao ela e reparada aqui em vez de\n  // derrubar o roteiro inteiro. So bloqueia o que nao da para reconstruir.\n  let slides = parsed.slides\n    .filter(s => s && (s.titulo || s.texto))\n    .map(s => ({\n      papel: String(s.papel || '').trim().toLowerCase(),\n      titulo: String(s.titulo || '').trim(),\n      texto: String(s.texto || '').trim()\n    }));\n\n  // A IA foi instruida a nao escrever CTA. Se escrever, o slide sai aqui --\n  // o CTA real e adicionado depois, por codigo, sempre igual.\n  // A heuristica de texto so olha o ULTIMO slide, e com padroes especificos:\n  // 'siga' solto poderia derrubar um slide legitimo ('siga esse raciocinio').\n  const ehFechamento = (s) => /sig(a|ue) (a p[aá]gina|o @|a gente)|nos sig(a|ue)|obrigad[oa] por|at[eé] a pr[oó]xima|salve esse post|compartilhe esse post|link (na|da) bio/i.test(s.titulo + ' ' + s.texto);\n  const ultimo = slides[slides.length - 1];\n  const cta_indevido = slides.filter(s => s.papel === 'cta' || (s === ultimo && ehFechamento(s)));\n  if (cta_indevido.length) {\n    slides = slides.filter(s => !cta_indevido.includes(s));\n    avisos.push('a IA escreveu ' + cta_indevido.length + ' slide(s) de fechamento; foram removidos');\n  }\n\n  // Papel ausente (formato antigo) ou fora de ordem: reconstroi por posicao.\n  const semPapel = slides.filter(s => !['gancho', 'contexto', 'desenvolvimento'].includes(s.papel));\n  if (semPapel.length) {\n    avisos.push('papel ausente ou invalido em ' + semPapel.length + ' slide(s); atribuido por posicao');\n  }\n  const gancho = slides.find(s => s.papel === 'gancho') || slides[0];\n  const contexto = slides.find(s => s.papel === 'contexto' && s !== gancho) ||\n                   slides.find(s => s !== gancho);\n  const desenvolvimento = slides.filter(s => s !== gancho && s !== contexto);\n\n  if (!gancho || !contexto || desenvolvimento.length === 0) {\n    return [{ json: { erro: true, mensagem: 'Estrutura insuficiente: precisa de gancho + contexto + ao menos 1 desenvolvimento. Vieram ' + slides.length + ' slides.', bruto: clean } }];\n  }\n\n  const ordemOriginal = slides.map(s => s.papel).join(',');\n  gancho.papel = 'gancho';\n  contexto.papel = 'contexto';\n  desenvolvimento.forEach(s => { s.papel = 'desenvolvimento'; });\n  slides = [gancho, contexto, ...desenvolvimento];\n  if (ordemOriginal !== slides.map(s => s.papel).join(',') && !semPapel.length) {\n    avisos.push('slides estavam fora da ordem gancho > contexto > desenvolvimento; reordenados');\n  }\n\n  // ---------- 3) AVISOS DE FORMA (nao bloqueiam) ----------\n  if (desenvolvimento.length < 2) avisos.push('so ' + desenvolvimento.length + ' slide de desenvolvimento (esperado 2 a 4)');\n  if (desenvolvimento.length > 4) avisos.push(desenvolvimento.length + ' slides de desenvolvimento (esperado 2 a 4)');\n\n  const limites = {\n    gancho: { min: 0, max: 90 },\n    contexto: { min: 80, max: 160 },\n    desenvolvimento: { min: 90, max: 180 }\n  };\n  slides.forEach((s, i) => {\n    const lim = limites[s.papel];\n    const n = s.texto.length;\n    if (n > lim.max) avisos.push('slide ' + (i + 1) + ' (' + s.papel + ') com ' + n + ' chars, limite ' + lim.max);\n    if (lim.min && n < lim.min) avisos.push('slide ' + (i + 1) + ' (' + s.papel + ') com ' + n + ' chars, minimo ' + lim.min);\n    if (s.titulo.length > 40) avisos.push('titulo do slide ' + (i + 1) + ' com ' + s.titulo.length + ' chars, limite 40');\n  });\n\n  // Gancho que abre como aula em vez de abrir tensao.\n  if (/^(voce sabe|você sabe|hoje (vamos|eu vou)|o que e|o que é)\\b/i.test(gancho.titulo + ' ' + gancho.texto)) {\n    avisos.push('o gancho comeca com formula de aula (\"voce sabe o que e...\") -- reescrever antes de aprovar');\n  }\n\n  return [{ json: { ...parsed, slides, erro: false, avisos } }];\n} catch (e) {\n  return [{ json: { erro: true, mensagem: e.message } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        976
+      ],
+      "id": "ad523065-5b64-4601-aece-b5125a8f342e",
+      "name": "Parse1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1a2b3c4-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.erro }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -944,
+        976
+      ],
+      "id": "afd0c274-8438-4be1-90e0-450c91339e76",
+      "name": "IF - Parse OK?1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        1120
+      ],
+      "id": "9b43a5e6-4f07-4c70-8d84-a7848ac7ab62",
+      "name": "Parse falhou",
+      "notes": "Ramo falso. Abra o item aqui para ver 'mensagem' e 'bruto' quando a IA devolver JSON invalido ou estrutura irrecuperavel."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza o texto antes de gravar na memoria: minusculo, sem acento, sem pontuacao.\nfunction normalizar(texto) {\n  return String(texto || \"\")\n    .trim()\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s]/g, \"\")\n    .replace(/\\s+/g, \" \");\n}\n\nconst dados = $input.first().json;\n\nreturn [{\n  json: {\n    ...dados,\n    termo_normalizado: normalizar(dados.termo),\n    data: new Date().toISOString(),\n    status: \"gerado\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        976
+      ],
+      "id": "aae79c0e-40e4-4e1a-b8ee-db87c90a039a",
+      "name": "Normaliza termo1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SLIDE DE CTA -- FONTE UNICA DE VERDADE\n// O ultimo slide do carrossel e sempre este, e nao e escrito pela IA. Motivo:\n// e a unica parte da peca que nao deve variar de semana para semana. Se voce\n// quiser mudar a chamada da pagina, mude AQUI e vale para todo Dicionario IA.\n// (Se quiser mudar tambem em quarta e sexta, replique este node la.)\n\nconst PERFIL = '@iaclube';\nconst SITE = 'iaclube.help';\n\nconst d = $input.first().json;\nconst termo = String(d.termo || '').trim();\n\n// Interpolar o termo da variacao sem risco de estourar o limite de arte:\n// termo curto entra na frase, termo longo cai na versao generica.\nconst texto = termo.length > 0 && termo.length <= 28\n  ? `Se ${termo} fez sentido agora, tem termo novo toda semana no ${PERFIL}. O resto do conteúdo está em ${SITE}.`\n  : `Tem termo novo toda semana no ${PERFIL}. O resto do conteúdo está em ${SITE}.`;\n\nconst slideCta = {\n  papel: 'cta',\n  titulo: 'Ficou mais claro?',\n  texto\n};\n\nreturn [{\n  json: {\n    ...d,\n    slides: [...(d.slides || []), slideCta]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        976
+      ],
+      "id": "8df92b84-2fab-484d-a64d-e1daf177f731",
+      "name": "Adiciona slide de CTA",
+      "notes": "O texto do CTA vive so aqui. Editar aqui muda todo Dicionario IA daqui pra frente."
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONTRATO COM O FLUXO DE DESIGN\n// A descricao do card pai e a fonte unica de verdade. O fluxo de design vai ler\n// esta descricao e cortar pelos marcadores '## ' abaixo. Se voce editar o texto\n// no Trello durante a revisao, edite DENTRO das secoes -- nao apague nem renomeie\n// os cabecalhos, senao o parser do design nao encontra nada.\n//\n// Cada slide vem marcado com o papel narrativo (GANCHO / CONTEXTO /\n// DESENVOLVIMENTO / CTA). O papel nao e decoracao: o template de arte usa ele\n// para escolher o layout (capa, corpo, fechamento). Nao remova o slide CTA e\n// nao mude a ordem dos papeis na revisao.\n\nconst d = $input.first().json;\n\nconst slides = (d.slides || [])\n  .map((s, i) => `### ${i + 1} | ${String(s.papel || '').toUpperCase()} | ${s.titulo}\\n${s.texto}`)\n  .join('\\n\\n');\n\nconst partes = [\n  d.definicao_curta,\n  '',\n  '## SLIDES',\n  slides,\n  '',\n  '## LEGENDA INSTAGRAM',\n  d.legendas.instagram,\n  '',\n  '## LEGENDA FACEBOOK',\n  d.legendas.facebook,\n  '',\n  '## LEGENDA LINKEDIN',\n  d.legendas.linkedin,\n  '',\n  '## HASHTAGS',\n  (d.hashtags || []).join(' ')\n];\n\nif (d.avisos && d.avisos.length) {\n  partes.push('', '## AVISOS DA AUTOMACAO', d.avisos.map(a => '- ' + a).join('\\n'));\n}\n\nreturn [{\n  json: {\n    ...d,\n    descricao: partes.join('\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        976
+      ],
+      "id": "a8e4ceeb-45a9-4ba2-8550-405f5a64f23a",
+      "name": "Monta descricao do card"
+    },
+    {
+      "parameters": {
+        "listId": "6a58788f7a2e4212ebe645fc",
+        "name": "=Dicionario IA | {{ $json.tema_card }}",
+        "description": "={{ $json.descricao }}",
+        "additionalFields": {
+          "idLabels": "6a58788f7a2e4212ebe64603"
+        }
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        976
+      ],
+      "id": "cb0bbd93-2e4a-478e-9364-29b9e69a825c",
+      "name": "Trello - Create Card (pai)1",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "notes": "Unico card criado por execucao. Sem label de rede -- e assim que o fluxo de polling reconhece que e card pai."
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "fnXU9hc4jy1TdS3t",
+          "mode": "list",
+          "cachedResultName": "dicionario_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/fnXU9hc4jy1TdS3t"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "termo": "={{ $('Normaliza termo1').first().json.termo }}",
+            "termo_normalizado": "={{ $('Normaliza termo1').first().json.termo_normalizado }}",
+            "data": "={{ $('Normaliza termo1').first().json.data }}",
+            "status": "={{ $('Normaliza termo1').first().json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "termo",
+              "displayName": "termo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "termo_normalizado",
+              "displayName": "termo_normalizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        1120
+      ],
+      "id": "297bb93a-ce5d-4bdf-993d-39106b2d8702",
+      "name": "Memoria1"
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "name": "Producao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        48,
+        880
+      ],
+      "id": "af6729b0-3728-4de1-af99-4148d664a6a3",
+      "name": "Checklist Producao",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "notes": "Checklist de etapas da peca inteira. As tarefas por rede so aparecem depois, nos cards filho criados pelo fluxo de design."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Depois do node de checklist, $json e o objeto da checklist -- entao $json.id\n// e o checklistId. Um item so entra e um item so sai: sem risco de pareamento.\nconst checklistId = $input.first().json.id;\n\nconst tarefas = [\n  'Ler so o slide 1: ele faria voce parar de rolar?',\n  'Conferir se cada slide abre algo que o proximo responde',\n  'Revisar as tres legendas',\n  'Aprovar texto (mover card para Aprovado)',\n  'Gerar arte do carrossel',\n  'Aprovar arte',\n  'Publicar nas tres redes'\n];\n\nreturn [{ json: { checklistId, tarefas } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        880
+      ],
+      "id": "77214006-d544-47fa-bae5-8fa263ff1fb9",
+      "name": "Tarefas de producao"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tarefas",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        464,
+        880
+      ],
+      "id": "08cef2aa-9e7d-480b-a899-66c0561424ef",
+      "name": "Split Out tarefas"
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "createCheckItem",
+        "checklistId": "={{ $json.checklistId }}",
+        "name": "={{ $json.tarefas }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        672,
+        880
+      ],
+      "id": "5a7b0794-5d92-450d-8f12-d8dcf395f698",
+      "name": "Create checklist item",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)1": {
+      "main": [
+        [
+          {
+            "node": "Memoria Termos1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Termos1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Dicionario IA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Dicionario IA1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Dicionario IA1": {
+      "main": [
+        [
+          {
+            "node": "Parse1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse1": {
+      "main": [
+        [
+          {
+            "node": "IF - Parse OK?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Parse OK?1": {
+      "main": [
+        [
+          {
+            "node": "Normaliza termo1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse falhou",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza termo1": {
+      "main": [
+        [
+          {
+            "node": "Adiciona slide de CTA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona slide de CTA": {
+      "main": [
+        [
+          {
+            "node": "Monta descricao do card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta descricao do card": {
+      "main": [
+        [
+          {
+            "node": "Trello - Create Card (pai)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - Create Card (pai)1": {
+      "main": [
+        [
+          {
+            "node": "Checklist Producao",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memoria1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checklist Producao": {
+      "main": [
+        [
+          {
+            "node": "Tarefas de producao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tarefas de producao": {
+      "main": [
+        [
+          {
+            "node": "Split Out tarefas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out tarefas": {
+      "main": [
+        [
+          {
+            "node": "Create checklist item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a191c120e23d4b5efde4f49aaab9932ab4d273166452afd8ccf065afbded6fd8"
+  }
+}

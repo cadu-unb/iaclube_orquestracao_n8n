@@ -1,0 +1,1774 @@
+{
+  "name": "Dicionário IA · Completo (texto → arte)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Dicionário IA · Completo (texto → arte)\n**Parte 1, texto (faixa de cima):** é o fluxo `dicionario-v1`: a IA escolhe um termo que a página ainda não explicou, escreve os slides, cria o card no Trello e grava o termo na memória. Mudou só o prompt: os limites de caracteres agora são os dos cards `dict-v1` e a IA escreve também o **prompt das 2 imagens**.\n\n**Parte 2, arte (faixa de baixo):** **Montar entrada dos cards** transforma os slides nos 7 cards do `dict-v1` (capa, definição, 2 com imagem, texto, texto com início fino, encerramento) e segue o mesmo caminho do `noticias-2-arte`: gera as 2 imagens, monta os cards e comenta no card do Trello a pasta com o resultado.\n\n**Antes de rodar:** a **ponte** ligada no computador (`python3 scripts/ponte.py`) e o token dela no nó **Configuração** (veio em branco). Lá também ficam o estilo e o tamanho das imagens.",
+        "height": 380,
+        "width": 640,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "name": "Nota: como usar",
+      "id": "67931eeb-5ef5-5585-95c6-03366c58df96",
+      "position": [
+        -480,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Parte 2: imagens e cards\nMesmo caminho do `noticias-2-arte`, com 2 imagens (cerca de 8 min). Se algo falhar aqui, o texto **já está no Trello**, e o comentário de falha traz o JSON de entrada pronto para rodar só a arte depois.",
+        "height": 150,
+        "width": 520,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "name": "Nota: arte",
+      "id": "fa1cb0e0-679f-5f54-9a0e-6cc157696039",
+      "position": [
+        240,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Ramo de falha\nQualquer erro da arte cai aqui: monta a mensagem, **desliga os dois servidores**, comenta no card do Trello e termina o fluxo com o motivo.",
+        "height": 130,
+        "width": 560,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "name": "Nota: falha",
+      "id": "dd124fea-d663-54c6-8b19-befa2b1ece79",
+      "position": [
+        2480,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        80
+      ],
+      "id": "e66d5084-5b1c-5523-b26a-a8e16d297ff9",
+      "name": "Toda segunda 15h",
+      "notes": "triggerAtDay 1 = segunda. Mudado de [5] para nao concorrer com o fluxo de Noticias (sexta 15h) pelo mesmo TPM da OpenAI."
+    },
+    {
+      "parameters": {},
+      "id": "63860e0f-7cc2-5b67-aa78-6626884af538",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token e tamanho das imagens.\nreturn [{ json: {\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  // (host.docker.internal NÃO existe nesse container; ele não tem extra_hosts.)\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA',\n  // Conjunto de cards. Os nomes dos modelos em \"Montar entrada dos cards\" são os do dict-v1.\n  serie: 'dict-v1',\n  // Pasta de saída das imagens: iaclube_n8n/<tipo>/ (separa o Dicionário das Notícias, que usam 'noticias').\n  tipo: 'dicionario',\n  marca: '@iaclube',\n  // Acrescentado ao fim de todo prompt de imagem: é o que deixa as imagens com a mesma cara.\n  // As cores são as do card do Dicionário (fundo #f2f2f1, texto #0e1626, acento #e63415).\n  estilo_comum: 'flat vector editorial illustration, bold simple shapes, soft gradients, vivid red-orange and deep navy palette on a warm off-white background, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark',\n  // Tamanho das imagens (múltiplos de 16). Pequena 3:2 = 624 x 416 (cerca de 4 min cada).\n  // Média 3:2 = 944 x 624 (cerca de 9 min cada). O espaço da imagem no card é 839 x 592.\n  largura: 624,\n  altura: 416,\n  espera_subir_s: 5,            // pausa depois de subir cada servidor\n  intervalo_consulta_s: 30,     // de quanto em quanto tempo olhar a fila de imagens\n  tempo_maximo_geracao_min: 90  // desiste se as imagens passarem disso (são só 2)\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Configuração",
+      "id": "d3bfa974-d4a8-5d74-b177-e257d0c328fa",
+      "position": [
+        -180,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fnXU9hc4jy1TdS3t",
+          "mode": "list",
+          "cachedResultName": "dicionario_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/fnXU9hc4jy1TdS3t"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        40,
+        160
+      ],
+      "id": "8e62be58-651f-5053-870d-2939bb60298e",
+      "name": "Memoria - ler",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traz todos os termos ja usados; se a tabela estiver vazia, retorna lista vazia (sem quebrar).\nconst linhas = $input.all().map(item => item.json);\n\nconst usados = linhas\n  .map(l => l.termo)\n  .filter(t => t);\n\nconst usadosNormalizados = linhas\n  .map(l => l.termo_normalizado || l.termo)\n  .filter(t => t);\n\nreturn [{\n  json: {\n    termos_usados: usados.join(', ') || 'nenhum ainda',\n    termos_normalizados: usadosNormalizados\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        160
+      ],
+      "id": "11e8bdef-84b1-5f0c-a2a9-f5f20c24e9fc",
+      "name": "Memoria Termos"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-pro",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-pro"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        0
+      ],
+      "id": "131d71e2-e674-5095-8e5d-0736008e13db",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Qi02ZAkvb1kjIeTU",
+          "name": "OpenAI account"
+        }
+      },
+      "notes": "maxTokens 8000: a saida real e um JSON de ~1.2k tokens, o resto e folga para o raciocinio do modelo. Sem esse teto a OpenAI reserva o maximo do modelo e isso conta inteiro contra o limite de tokens por minuto (TPM)."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voce e o redator de conteudo do IAClube, uma pagina educativa sobre inteligencia\nartificial no Instagram, Facebook e LinkedIn.\n\nPERSONALIDADE DA MARCA\n- Tom explicativo e amigavel, como um amigo que entende de IA explicando pra outro\n- Nunca soa academico, arrogante ou robotico\n- Evita jargao sem explicar; quando usa um termo tecnico, explica na hora\n- Publico-alvo: pessoas de 18 a 30 anos, a maioria com conhecimento basico de\n  ferramentas de IA, mas parte do publico ja e intermediario/avancado -- por isso,\n  a explicacao tem que ser simples sem ser rasa: alguem que ja manja tambem\n  precisa achar interessante\n\nSUA TAREFA HOJE\nEscolher UM termo ou conceito de inteligencia artificial que ainda nao foi\nexplicado na pagina, e criar o roteiro de um post \"Dicionario IA\" -- carrossel\nde 6 slides escritos por voce (a automacao adiciona mais um no fim, e cada slide vira um card\nde arte com espaco fixo, por isso os limites de caractere abaixo sao rigidos).\n\nTERMOS JA USADOS (nao repita nenhum destes):\n{{ $json.termos_usados }}\n\nREGRAS DE CONTEUDO\n- Escolha um termo relevante e atual (ex: \"fine-tuning\", \"alucinacao\", \"token\",\n  \"prompt injection\", \"RAG\", \"context window\") -- evite termos obvios demais\n  como \"o que e IA\"\n- A explicacao deve ser 100% baseada no seu conhecimento -- nao e necessario\n  pesquisar, ja que conceitos fundamentais de IA nao mudam de uma semana pra outra\n- Use uma analogia ou exemplo do dia a dia pra tornar o conceito concreto\n- Cada slide deve ter uma ideia so -- nao amontoe informacao\n\nESTRUTURA DO CARROSSEL (obrigatoria)\nCada slide tem um campo \"papel\", e o valor precisa ser exatamente um destes\ntres: \"gancho\", \"contexto\" ou \"desenvolvimento\". A ordem no array e sempre esta:\n\n1. \"gancho\" -- exatamente 1 slide, sempre o primeiro.\n   E a unica coisa que a pessoa ve antes de decidir se para ou continua rolando.\n   Ele NAO explica: ele abre uma tensao que so o resto do carrossel resolve.\n   Escolha uma destas entradas: uma afirmacao contraintuitiva, um erro comum que\n   quase todo mundo comete, uma pergunta que a pessoa nao consegue responder, ou\n   um custo concreto de nao saber aquilo.\n   Nao comece com \"voce sabe o que e X?\", \"hoje vamos falar sobre X\" nem\n   \"X: entenda de uma vez\" -- isso e titulo de aula, nao gancho.\n   O termo pode aparecer, mas a curiosidade nao pode depender de a pessoa ja\n   conhece-lo.\n\n2. \"contexto\" -- exatamente 1 slide, sempre o segundo.\n   Fecha em parte a tensao do gancho e nomeia o assunto. Aqui entra o termo e a\n   primeira nocao do que ele significa, em uma frase. Nao entregue a explicacao\n   inteira: entregue o suficiente para ficar claro que vale continuar.\n\n3. \"desenvolvimento\" -- exatamente 4 slides, na sequencia, ate o fim do array.\n   E onde a explicacao acontece, e a arte tem um card pronto para cada um, nesta ordem:\n   1o: a analogia do dia a dia (este slide ganha uma ilustracao)\n   2o: como funciona por dentro, em termos simples (este slide ganha uma ilustracao)\n   3o: onde a pessoa ja esbarra nisso sem perceber\n   4o: o erro tipico de quem nao entende, ou o que fazer a respeito\n   Uma ideia por slide.\n\nNAO escreva slide de despedida, agradecimento, \"siga a pagina\" ou qualquer\nfechamento. O ultimo slide e um CTA fixo que a automacao adiciona sozinha --\nse voce escrever um, ele vai aparecer duplicado.\n\nCOMO SEGURAR A ATENCAO\n- Cada slide responde a pergunta que o slide anterior abriu e abre uma nova. Se\n  a pessoa puder parar no slide 3 sem sentir que ficou faltando algo, o\n  carrossel esta mal construido\n- Frases curtas. Segunda pessoa (\"voce ja fez isso\") em vez de impessoal\n  (\"e comum que se faca\")\n- No maximo UMA vez no carrossel inteiro voce pode mandar a pessoa arrastar\n  (\"arrasta pro lado\"). Retencao vem de curiosidade, nao de instrucao\n- Numero, exemplo concreto e nome de ferramenta prendem mais que adjetivo\n  (\"mais rapido\", \"muito util\", \"revolucionario\")\n- O slide mais fraco define quanta gente chega no fim: se um slide so repete o\n  anterior com outras palavras, troque por uma ideia nova (sao sempre 4 de desenvolvimento)\n\nLIMITES DE CARACTERE (obrigatorios: o texto vai direto para a arte, e cada card\ntem espaco fixo. Texto maior que o limite sai cortado ou espremido)\n- gancho: titulo_leve + titulo somados, no maximo 22 caracteres; texto ate 87.\n  O gancho e curto de proposito -- texto longo na capa e o jeito mais rapido de\n  perder o leitor\n- contexto: titulo ate 18 caracteres; texto entre 80 e 152\n- desenvolvimento 1: titulo_leve + titulo somados ate 23; texto entre 90 e 175\n- desenvolvimento 2: titulo_leve + titulo somados ate 32; texto entre 90 e 163\n- desenvolvimento 3: titulo_leve + titulo somados ate 26; texto entre 90 e 169\n- desenvolvimento 4: titulo_leve + titulo somados ate 29; texto entre 90 e 152\n- definicao_curta: ate 200 caracteres (nao vai para a arte, e o resumo do card)\n\nOS TITULOS\nEm todo slide, menos no contexto, o titulo vem em duas partes que a arte desenha\ncom pesos diferentes: \"titulo_leve\" (o comeco, em letra fina) e \"titulo\" (o resto,\nem destaque). As duas formam UMA frase so, e o limite de caracteres acima vale para\nas duas somadas. Exemplo: titulo_leve \"A IA pode te\" + titulo \"esquecer.\". Nao termine\no titulo_leve com pontuacao e nao repita palavras entre as duas partes.\nNo contexto o \"titulo\" e so o proprio termo, do jeito que ele aparece na arte,\ncom ate 18 caracteres (use a sigla ou o nome curto se o termo for longo), e nao\nleva \"titulo_leve\".\n\nAS IMAGENS\nOs dois primeiros slides de desenvolvimento levam uma ilustracao, criada por um\ngerador de imagens local a partir do campo \"prompt_imagem\". Escreva esse campo assim:\n- em INGLES: o gerador de imagens entende ingles bem melhor\n- uma cena concreta e simples que mostre a ideia do slide por metafora visual:\n  objetos, lugar e clima (no 1o slide, a analogia do dia a dia; no 2o, o\n  funcionamento). Exemplo: \"a small desk with only a few papers fitting on it,\n  an older paper sliding off the edge, calm studious mood\"\n- sem texto, letras, numeros, logotipos nem nome de empresa, marca ou produto:\n  o gerador escreve mal e nao deve imitar marca\n- sem pessoas reais e sem rostos reconheciveis\n- nao descreva estilo de arte, cores nem enquadramento: a automacao acrescenta\n  sozinha o estilo visual da pagina, igual para todas as imagens\n- entre 60 e 300 caracteres, e uma cena diferente para cada imagem\nOs outros slides nao levam \"prompt_imagem\".\n\nAS TRES LEGENDAS\nO carrossel e o MESMO nas tres redes. A unica coisa que muda e a legenda.\nEscreva as tres descrevendo a mesma peca, sem inventar conteudo diferente:\n- instagram: curta e envolvente, 1-2 emojis, termina com pergunta ou\n  call-to-action leve. Ate 600 caracteres\n- facebook: adaptacao da do Instagram, um pouco mais explicativa e com menos\n  dependencia de emoji, ja que o feed do Facebook favorece texto. Ate 800 caracteres\n- linkedin: mais analitica, sem emojis, tom profissional, pode trazer uma\n  implicacao pratica ou de mercado. Ate 1200 caracteres\nA legenda pode convidar a seguir a pagina e citar o iaclube.help, mas nao\nrepita palavra por palavra o texto do slide de CTA.\n\nFORMATO DE SAIDA\nResponda APENAS com um JSON valido, sem nenhum texto antes ou depois, sem\nblocos de codigo markdown. Siga exatamente esta estrutura:\n\n{\n  \"termo\": \"nome do termo em poucas palavras\",\n  \"definicao_curta\": \"1-2 frases explicando o termo de forma simples\",\n  \"slides\": [\n    {\"papel\": \"gancho\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"contexto\", \"titulo\": \"o termo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\", \"prompt_imagem\": \"concrete scene in english, no text, no logos\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\", \"prompt_imagem\": \"concrete scene in english, no text, no logos\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"}\n  ],\n  \"legendas\": {\n    \"instagram\": \"...\",\n    \"facebook\": \"...\",\n    \"linkedin\": \"...\"\n  },\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"tema_card\": \"titulo curto que identifica essa peca de conteudo\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        480,
+        160
+      ],
+      "id": "cc88ecc0-4c89-5212-8fc8-47cc87b1169c",
+      "name": "AI Agent - Dicionario",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "retryOnFail com 20s de espera: cobre o 429 de rate limit da OpenAI, que se resolve sozinho na janela seguinte de 1 minuto."
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const raw = $input.first().json.output;\n\n  // A IA as vezes envolve o JSON em blocos de codigo markdown (```json ... ```).\n  const clean = String(raw).replace(/```json|```/g, '').trim();\n  const parsed = JSON.parse(clean);\n\n  // ---------- 1) CONTRATO MINIMO ----------\n  const faltando = [];\n  if (!parsed.termo) faltando.push('termo');\n  if (!parsed.tema_card) faltando.push('tema_card');\n  if (!parsed.definicao_curta) faltando.push('definicao_curta');\n  if (!Array.isArray(parsed.slides) || parsed.slides.length === 0) faltando.push('slides');\n  if (!parsed.legendas) faltando.push('legendas');\n  else {\n    for (const rede of ['instagram', 'facebook', 'linkedin']) {\n      if (!parsed.legendas[rede]) faltando.push('legendas.' + rede);\n    }\n  }\n  if (faltando.length) {\n    return [{ json: { erro: true, mensagem: 'Campos ausentes: ' + faltando.join(', '), bruto: clean } }];\n  }\n\n  const avisos = [];\n\n  // ---------- 2) NORMALIZACAO DE PAPEIS ----------\n  // A estrutura narrativa e o ponto do post, entao ela e reparada aqui em vez de\n  // derrubar o roteiro inteiro. So bloqueia o que nao da para reconstruir.\n  let slides = parsed.slides\n    .filter(s => s && (s.titulo || s.texto))\n    .map(s => ({\n      papel: String(s.papel || '').trim().toLowerCase(),\n      titulo_leve: String(s.titulo_leve || '').trim(),\n      titulo: String(s.titulo || '').trim(),\n      texto: String(s.texto || '').trim(),\n      prompt_imagem: String(s.prompt_imagem || '').replace(/\\s+/g, ' ').trim()\n    }));\n\n  // A IA foi instruida a nao escrever CTA. Se escrever, o slide sai aqui --\n  // o CTA real e adicionado depois, por codigo, sempre igual.\n  // A heuristica de texto so olha o ULTIMO slide, e com padroes especificos:\n  // 'siga' solto poderia derrubar um slide legitimo ('siga esse raciocinio').\n  const ehFechamento = (s) => /sig(a|ue) (a p[aá]gina|o @|a gente)|nos sig(a|ue)|obrigad[oa] por|at[eé] a pr[oó]xima|salve esse post|compartilhe esse post|link (na|da) bio/i.test(s.titulo + ' ' + s.texto);\n  const ultimo = slides[slides.length - 1];\n  const cta_indevido = slides.filter(s => s.papel === 'cta' || (s === ultimo && ehFechamento(s)));\n  if (cta_indevido.length) {\n    slides = slides.filter(s => !cta_indevido.includes(s));\n    avisos.push('a IA escreveu ' + cta_indevido.length + ' slide(s) de fechamento; foram removidos');\n  }\n\n  // Papel ausente (formato antigo) ou fora de ordem: reconstroi por posicao.\n  const semPapel = slides.filter(s => !['gancho', 'contexto', 'desenvolvimento'].includes(s.papel));\n  if (semPapel.length) {\n    avisos.push('papel ausente ou invalido em ' + semPapel.length + ' slide(s); atribuido por posicao');\n  }\n  const gancho = slides.find(s => s.papel === 'gancho') || slides[0];\n  const contexto = slides.find(s => s.papel === 'contexto' && s !== gancho) ||\n                   slides.find(s => s !== gancho);\n  const desenvolvimento = slides.filter(s => s !== gancho && s !== contexto);\n\n  if (!gancho || !contexto || desenvolvimento.length === 0) {\n    return [{ json: { erro: true, mensagem: 'Estrutura insuficiente: precisa de gancho + contexto + ao menos 1 desenvolvimento. Vieram ' + slides.length + ' slides.', bruto: clean } }];\n  }\n\n  const ordemOriginal = slides.map(s => s.papel).join(',');\n  gancho.papel = 'gancho';\n  contexto.papel = 'contexto';\n  desenvolvimento.forEach(s => { s.papel = 'desenvolvimento'; });\n  slides = [gancho, contexto, ...desenvolvimento];\n  if (ordemOriginal !== slides.map(s => s.papel).join(',') && !semPapel.length) {\n    avisos.push('slides estavam fora da ordem gancho > contexto > desenvolvimento; reordenados');\n  }\n\n  // ---------- 3) AVISOS DE FORMA (nao bloqueiam) ----------\n  // A arte tem 4 cards de desenvolvimento (dict-v1). Com menos, ficam cards de fora; com mais, sobram slides.\n  if (desenvolvimento.length !== 4) avisos.push(desenvolvimento.length + ' slides de desenvolvimento (esperado 4, um para cada card da arte)');\n\n  // Limites dos cards do conjunto dict-v1 (iaclube_n8n/templates/dict-v1/limites.json):\n  // gancho -> capa, contexto -> definicao, desenvolvimento 1 a 4 -> texto-com-imagem-1,\n  // texto-com-imagem-2, texto, texto-com-inicio-fino. O titulo conta titulo_leve + titulo juntos.\n  const DEV = [\n    { titulo: 23, max: 175 }, { titulo: 32, max: 163 }, { titulo: 26, max: 169 }, { titulo: 29, max: 152 }\n  ];\n  const limites = {\n    gancho: { titulo: 22, min: 0, max: 87 },\n    contexto: { titulo: 18, min: 80, max: 152 }\n  };\n  let posDev = 0;\n  slides.forEach((s, i) => {\n    let lim = limites[s.papel];\n    if (s.papel === 'desenvolvimento') {\n      const d = DEV[Math.min(posDev, DEV.length - 1)];\n      lim = { titulo: d.titulo, min: 90, max: d.max };\n      if (posDev < 2) {\n        if (!s.prompt_imagem) avisos.push('slide ' + (i + 1) + ' (desenvolvimento ' + (posDev + 1) + ') sem prompt_imagem -- a imagem vai sair de um prompt generico');\n        else if (s.prompt_imagem.length > 300) avisos.push('prompt_imagem do slide ' + (i + 1) + ' com ' + s.prompt_imagem.length + ' chars, limite 300');\n      }\n      posDev++;\n    }\n    const n = s.texto.length;\n    if (n > lim.max) avisos.push('slide ' + (i + 1) + ' (' + s.papel + ') com ' + n + ' chars, limite ' + lim.max);\n    if (lim.min && n < lim.min) avisos.push('slide ' + (i + 1) + ' (' + s.papel + ') com ' + n + ' chars, minimo ' + lim.min);\n    const t = [s.titulo_leve, s.titulo].filter(Boolean).join(' ').length;\n    if (t > lim.titulo) avisos.push('titulo do slide ' + (i + 1) + ' (' + s.papel + ') com ' + t + ' chars, limite ' + lim.titulo);\n  });\n\n  // Gancho que abre como aula em vez de abrir tensao.\n  if (/^(voce sabe|você sabe|hoje (vamos|eu vou)|o que e|o que é)\\b/i.test(gancho.titulo + ' ' + gancho.texto)) {\n    avisos.push('o gancho comeca com formula de aula (\"voce sabe o que e...\") -- reescrever antes de aprovar');\n  }\n\n  return [{ json: { ...parsed, slides, erro: false, avisos } }];\n} catch (e) {\n  return [{ json: { erro: true, mensagem: e.message } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        160
+      ],
+      "id": "35e852e3-24d0-5f34-8d0f-c1e9564fe310",
+      "name": "Parse"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1a2b3c4-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.erro }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        920,
+        160
+      ],
+      "id": "0affab28-39ac-5aa4-87c6-37aa561f7b50",
+      "name": "IF - Parse OK?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        340
+      ],
+      "id": "c9e1d3fc-0724-5981-9ed0-7d0ad24987d3",
+      "name": "Parse falhou",
+      "notes": "Ramo falso. Abra o item aqui para ver 'mensagem' e 'bruto' quando a IA devolver JSON invalido ou estrutura irrecuperavel."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza o texto antes de gravar na memoria: minusculo, sem acento, sem pontuacao.\nfunction normalizar(texto) {\n  return String(texto || \"\")\n    .trim()\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s]/g, \"\")\n    .replace(/\\s+/g, \" \");\n}\n\nconst dados = $input.first().json;\n\nreturn [{\n  json: {\n    ...dados,\n    termo_normalizado: normalizar(dados.termo),\n    data: new Date().toISOString(),\n    status: \"gerado\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        160
+      ],
+      "id": "b6ed2623-18d5-5ab4-abfc-40abf6a89c17",
+      "name": "Normaliza termo"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SLIDE DE CTA -- FONTE UNICA DE VERDADE\n// O ultimo slide do carrossel e sempre este, e nao e escrito pela IA. Motivo:\n// e a unica parte da peca que nao deve variar de semana para semana. Se voce\n// quiser mudar a chamada da pagina, mude AQUI e vale para todo Dicionario IA.\n// (Se quiser mudar tambem em quarta e sexta, replique este node la.)\n\nconst PERFIL = '@iaclube';\nconst SITE = 'iaclube.help';\n\nconst d = $input.first().json;\nconst termo = String(d.termo || '').trim();\n\n// Interpolar o termo da variacao sem risco de estourar o limite de arte:\n// termo curto entra na frase, termo longo cai na versao generica.\nconst texto = termo.length > 0 && termo.length <= 28\n  ? `Se ${termo} fez sentido agora, tem termo novo toda semana no ${PERFIL}. O resto do conteúdo está em ${SITE}.`\n  : `Tem termo novo toda semana no ${PERFIL}. O resto do conteúdo está em ${SITE}.`;\n\nconst slideCta = {\n  papel: 'cta',\n  titulo: 'Ficou mais claro?',\n  texto\n};\n\nreturn [{\n  json: {\n    ...d,\n    slides: [...(d.slides || []), slideCta]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        160
+      ],
+      "id": "4f5d83b9-f357-5ab7-b16b-d491a53bb58b",
+      "name": "Adiciona slide de CTA",
+      "notes": "O texto do CTA vive so aqui. Editar aqui muda todo Dicionario IA daqui pra frente."
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONTRATO COM O FLUXO DE DESIGN\n// A descricao do card pai e a fonte unica de verdade. O fluxo de design vai ler\n// esta descricao e cortar pelos marcadores '## ' abaixo. Se voce editar o texto\n// no Trello durante a revisao, edite DENTRO das secoes -- nao apague nem renomeie\n// os cabecalhos, senao o parser do design nao encontra nada.\n//\n// Cada slide vem marcado com o papel narrativo (GANCHO / CONTEXTO /\n// DESENVOLVIMENTO / CTA). O papel nao e decoracao: o template de arte usa ele\n// para escolher o layout (capa, corpo, fechamento). Nao remova o slide CTA e\n// nao mude a ordem dos papeis na revisao.\n\nconst d = $input.first().json;\n\nconst slides = (d.slides || [])\n  .map((s, i) => `### ${i + 1} | ${String(s.papel || '').toUpperCase()} | ${[s.titulo_leve, s.titulo].filter(Boolean).join(' ')}\\n${s.texto}`)\n  .join('\\n\\n');\n\n// Os prompts de imagem ficam no card para conferencia: e deles que a arte sai.\nconst prompts = (d.slides || [])\n  .filter(s => s.papel === 'desenvolvimento')\n  .slice(0, 2)\n  .map((s, i) => `${i + 1}. ${s.prompt_imagem || '(sem prompt: a automacao usa um generico)'}`)\n  .join('\\n');\n\nconst partes = [\n  d.definicao_curta,\n  '',\n  '## SLIDES',\n  slides,\n  '',\n  '## LEGENDA INSTAGRAM',\n  d.legendas.instagram,\n  '',\n  '## LEGENDA FACEBOOK',\n  d.legendas.facebook,\n  '',\n  '## LEGENDA LINKEDIN',\n  d.legendas.linkedin,\n  '',\n  '## HASHTAGS',\n  (d.hashtags || []).join(' '),\n  '',\n  '## PROMPTS DE IMAGEM',\n  prompts\n];\n\nif (d.avisos && d.avisos.length) {\n  partes.push('', '## AVISOS DA AUTOMACAO', d.avisos.map(a => '- ' + a).join('\\n'));\n}\n\nreturn [{\n  json: {\n    ...d,\n    descricao: partes.join('\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        160
+      ],
+      "id": "307c0606-1ccd-54ee-9135-eec6a0578145",
+      "name": "Monta descricao do card"
+    },
+    {
+      "parameters": {
+        "listId": "6a58788f7a2e4212ebe645fc",
+        "name": "=Dicionario IA | {{ $json.tema_card }}",
+        "description": "={{ $json.descricao }}",
+        "additionalFields": {
+          "idLabels": "6a58788f7a2e4212ebe64603"
+        }
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        160
+      ],
+      "id": "c51e34f7-defb-50a2-a22d-a2fc02d63290",
+      "name": "Trello - Criar card",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "notes": "Unico card criado por execucao. Sem label de rede -- e assim que o fluxo de polling reconhece que e card pai."
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "name": "Producao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        0
+      ],
+      "id": "23fbb9fd-5836-5e5b-a3a5-9221f059d68d",
+      "name": "Checklist Producao",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "notes": "Checklist de etapas da peca inteira. As tarefas por rede so aparecem depois, nos cards filho criados pelo fluxo de design."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Depois do node de checklist, $json e o objeto da checklist -- entao $json.id\n// e o checklistId. Um item so entra e um item so sai: sem risco de pareamento.\nconst checklistId = $input.first().json.id;\n\nconst tarefas = [\n  'Ler so o slide 1: ele faria voce parar de rolar?',\n  'Conferir se cada slide abre algo que o proximo responde',\n  'Revisar as tres legendas',\n  'Aprovar texto (mover card para Aprovado)',\n  'Conferir os cards gerados (a pasta vem num comentario deste card)',\n  'Aprovar arte',\n  'Publicar nas tres redes'\n];\n\nreturn [{ json: { checklistId, tarefas } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        0
+      ],
+      "id": "46757baf-7982-570c-895d-8c142b8cae90",
+      "name": "Tarefas de producao"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tarefas",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2460,
+        0
+      ],
+      "id": "3d6dbd60-fae2-5ec6-8832-66fe6746581e",
+      "name": "Split Out tarefas"
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "createCheckItem",
+        "checklistId": "={{ $json.checklistId }}",
+        "name": "={{ $json.tarefas }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        2680,
+        0
+      ],
+      "id": "f4371fde-38e5-5e4e-adac-a26d384cff41",
+      "name": "Create checklist item",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "fnXU9hc4jy1TdS3t",
+          "mode": "list",
+          "cachedResultName": "dicionario_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/fnXU9hc4jy1TdS3t"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "termo": "={{ $('Normaliza termo').first().json.termo }}",
+            "termo_normalizado": "={{ $('Normaliza termo').first().json.termo_normalizado }}",
+            "data": "={{ $('Normaliza termo').first().json.data }}",
+            "status": "={{ $('Normaliza termo').first().json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "termo",
+              "displayName": "termo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "termo_normalizado",
+              "displayName": "termo_normalizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2020,
+        200
+      ],
+      "id": "4e798ec2-6b4f-55ec-87f6-c68b7da9615f",
+      "name": "Memoria - gravar"
+    },
+    {
+      "parameters": {
+        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma o Dicionario que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_comum, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Adiciona slide de CTA': o que esta no card do Trello e o que\n// vai para a arte. Cada slide vira um card do dict-v1, sempre nesta ordem:\n//   gancho -> capa | contexto -> definicao | desenvolvimento 1..4 -> texto-com-imagem-1,\n//   texto-com-imagem-2, texto, texto-com-inicio-fino | cta -> encerramento\n// Os marcadores de peso ({leve|...}, {normal|...}, **...**) reproduzem os titulos dos cards originais.\nconst cfg = $('Configuração').first().json;\nconst d = $('Adiciona slide de CTA').first().json;\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\nconst termo = umaLinha(d.termo);\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[̀-ͯ]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\nconst negrito = (texto, trecho) => (trecho ? String(texto).split(trecho).join('**' + trecho + '**') : texto);\n\nconst gancho = doPapel('gancho')[0] || { titulo_leve: '', titulo: termo, texto: '' };\nconst contexto = doPapel('contexto')[0] || { titulo: termo, texto: '' };\nconst cta = doPapel('cta')[0] || { titulo: '', texto: '' };\nconst avisos_ponte = [];\n\n// Quantos slides de desenvolvimento: 4 e o normal (um por card). Com menos, usa os modelos\n// da tabela (os dois com imagem primeiro); com mais, os que sobram ficam de fora.\nconst MODELOS = {\n  2: ['texto-com-imagem-1', 'texto'],\n  3: ['texto-com-imagem-1', 'texto-com-imagem-2', 'texto'],\n  4: ['texto-com-imagem-1', 'texto-com-imagem-2', 'texto', 'texto-com-inicio-fino'],\n};\nlet desenvolvimento = doPapel('desenvolvimento');\nif (desenvolvimento.length > 4) {\n  avisos_ponte.push(desenvolvimento.length + ' slides de desenvolvimento: só os 4 primeiros viraram card');\n  desenvolvimento = desenvolvimento.slice(0, 4);\n}\nconst modelos = MODELOS[desenvolvimento.length] || MODELOS[2].slice(0, desenvolvimento.length);\nif (desenvolvimento.length < 4) avisos_ponte.push('só ' + desenvolvimento.length + ' slides de desenvolvimento: o carrossel saiu com menos cards que o normal (7)');\n\nconst cards = [];\nconst imagens = [];\n\n// capa: começo fino, quebra de linha, resto em destaque ('{leve|A IA pode te}\\nesquecer.')\ncards.push({ modelo: 'capa', campos: {\n  titulo: gancho.titulo_leve ? '{leve|' + umaLinha(gancho.titulo_leve) + '}\\n' + umaLinha(gancho.titulo) : umaLinha(gancho.titulo),\n  corpo: umaLinha(gancho.texto),\n} });\n\n// definicao: 'Isso é' + o termo + a explicação\ncards.push({ modelo: 'definicao', campos: {\n  antetitulo: 'Isso é',\n  titulo: umaLinha(contexto.titulo) || termo,\n  corpo: umaLinha(contexto.texto),\n} });\n\ndesenvolvimento.forEach((s, i) => {\n  const modelo = modelos[i];\n  const leve = umaLinha(s.titulo_leve);\n  const resto = umaLinha(s.titulo);\n  let titulo;\n  if (modelo === 'texto-com-inicio-fino') titulo = leve ? '{normal|' + leve + '} ' + resto : resto;\n  else if (modelo === 'texto') titulo = [leve, resto].filter(Boolean).join(' ');\n  else titulo = leve ? leve + ' **' + resto + '**' : '**' + resto + '**';   // texto-com-imagem-1 e -2\n  cards.push({ modelo, campos: { titulo, corpo: umaLinha(s.texto) } });\n\n  if (modelo.startsWith('texto-com-imagem')) {\n    imagens.push({\n      card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n      mascara: 'imagem_1',\n      nome_arquivo: 'dicionario-' + (slug(termo) || 'termo') + '-' + (imagens.length + 1),\n      prompt: umaLinha(s.prompt_imagem) ||\n        'a simple friendly editorial illustration that explains the artificial intelligence concept: ' + termo,\n    });\n  }\n});\n\n// encerramento: o CTA fixo do nó 'Adiciona slide de CTA', com o termo e o perfil em negrito\ncards.push({ modelo: 'encerramento', campos: {\n  titulo: umaLinha(cta.titulo).replace(/^(\\S+ \\S+) (\\S+)$/, '$1\\n$2'),\n  corpo: negrito(negrito(umaLinha(cta.texto), termo), '@iaclube'),\n} });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  tipo: cfg.tipo || 'dicionario',\n  nome: ('Dicionário IA ' + data + ' ' + termo).trim().slice(0, 80),\n  estilo_comum: cfg.estilo_comum || '',\n  entrada: { serie: cfg.serie, data, assunto: termo, marca: cfg.marca, cards },\n  imagens,\n  avisos_ponte,\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Montar entrada dos cards",
+      "id": "e783bee1-f28f-5bae-8eff-084d7e4c6af9",
+      "position": [
+        480,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  tipo: dados.tipo || 'noticias',   // vira a pasta iaclube_n8n/<tipo>/ nas Imagens\n  estilo_comum: (dados.estilo_comum || '').trim(),\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
+      },
+      "id": "63399765-730d-52d2-9ede-c65ebca667cf",
+      "name": "Validar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "9611ee51-4b3d-5e4e-bd77-99f0ff31c353",
+      "name": "Subir gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        760
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.espera_subir_s }}",
+        "unit": "seconds"
+      },
+      "id": "c6d54349-2b69-58f0-9f1e-cba2fb22588e",
+      "name": "Esperar gerador subir",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        720
+      ],
+      "webhookId": "c307b1e0-380e-508f-be48-745e9e7e0f51"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/health",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "0e1b1122-c7ab-5460-a9c9-f574332fc3e2",
+      "name": "Consultar saúde do gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        720
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 6,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d6518891-c771-54c3-bbb5-01952a3afe72",
+              "leftValue": "={{ $json.ready === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d6518964-eddf-5a4e-9bab-c8200de4d260",
+      "name": "Gerador pronto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = v.estilo_comum ? im.prompt.trim() + ', ' + v.estilo_comum : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
+      },
+      "id": "183ceafa-148a-52cf-8f23-54fae6b2e32f",
+      "name": "Montar pedidos de imagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/jobs/free",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json; charset=utf-8",
+        "body": "={{ JSON.stringify($json.corpo) }}"
+      },
+      "id": "9df1d5d4-ccc3-5485-a92d-ce5053fb7706",
+      "name": "Enfileirar imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        720
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const pedidos = $('Montar pedidos de imagem').all();\nconst respostas = $input.all();\nconst tickets = respostas.map((r, i) => ({\n  ticket: r.json.ticket,\n  card: pedidos[i].json.card,\n  mascara: pedidos[i].json.mascara,\n  nome_arquivo: pedidos[i].json.nome_arquivo,\n}));\nreturn [{ json: { tickets, total: tickets.length, iniciado_em: Date.now() } }];"
+      },
+      "id": "e28f7e24-2347-5093-99f4-b3fae2a421ed",
+      "name": "Reunir tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.intervalo_consulta_s }}",
+        "unit": "seconds"
+      },
+      "id": "fa19bc82-b21b-55db-96f6-7707b48476ef",
+      "name": "Esperar geração",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1160
+      ],
+      "webhookId": "eea31199-a95a-52ab-9d78-21c8475062c9"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/status?tickets={{ $('Reunir tickets').first().json.tickets.map(t => t.ticket).join(',') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "71eab9a9-f2ec-5053-8dae-a0abbcba7522",
+      "name": "Consultar andamento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        1160
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('Reunir tickets').first().json;\nconst cfg = $('Validar entrada').first().json.cfg;\nconst jobs = $input.first().json.jobs || {};\nconst cont = { queued: 0, running: 0, completed: 0, failed: 0, outro: 0 };\nconst falhas = [];\nfor (const t of r.tickets) {\n  const j = jobs[t.ticket] || { status: 'not_found' };\n  if (j.status in cont) cont[j.status]++; else cont.outro++;\n  if (j.status === 'failed' || j.status === 'not_found') {\n    falhas.push('card ' + t.card + ' (' + t.nome_arquivo + '): ' + (j.error || j.status));\n  }\n}\nconst minutos = Math.round((Date.now() - r.iniciado_em) / 6000) / 10;\nlet estado = 'esperando';\nlet motivo = '';\nif (falhas.length) {\n  estado = 'falhou';\n  motivo = 'Falha ao gerar imagem: ' + falhas.join(' | ');\n} else if (cont.completed === r.total) {\n  estado = 'concluido';\n} else if (minutos > cfg.tempo_maximo_geracao_min) {\n  estado = 'tempo_esgotado';\n  motivo = 'As imagens passaram de ' + cfg.tempo_maximo_geracao_min + ' min e ainda faltam ' + (r.total - cont.completed) + '.';\n}\nreturn [{ json: { estado, motivo, minutos, total: r.total, ...cont } }];"
+      },
+      "id": "2f7055fe-dccd-5082-9533-b7215643b09b",
+      "name": "Avaliar andamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "2ddfc257-d2e8-56f6-9354-fe0bab8b18f9",
+              "leftValue": "={{ $json.estado === 'concluido' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1b88150-a1ec-5c81-8fd6-01683aacc192",
+      "name": "Imagens prontas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5e48930c-fc2a-58b6-8d09-3ac52ebf0edf",
+              "leftValue": "={{ $json.estado === 'esperando' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "06a8d592-8754-5b40-8d45-ec92bfe872f8",
+      "name": "Ainda gerando?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Reunir tickets').first().json.tickets.map(t => ({ json: t }));"
+      },
+      "id": "da089af8-e22e-553f-8fe0-3512f4a49a61",
+      "name": "Listar tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/jobs/{{ $json.ticket }}/result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "949d0c71-15c5-52ea-8146-412ab050b7e9",
+      "name": "Buscar caminho da imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        1160
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst tickets = $('Listar tickets').all();\nconst resultados = $input.all();\nconst imagens = [];\nconst problemas = [];\nresultados.forEach((r, i) => {\n  const t = tickets[i].json;\n  const caminho = r.json.output_path;\n  if (!r.json.ready || !caminho) {\n    problemas.push('card ' + t.card + ' (' + t.nome_arquivo + '): imagem sem caminho de arquivo');\n  } else {\n    imagens.push({ card: t.card, mascara: t.mascara, caminho });\n  }\n});\nif (problemas.length) return [{ json: { ok: false, motivo: problemas.join(' | ') } }];\nreturn [{ json: { ok: true, pedido: {\n  versao: 1,\n  nome: v.nome,\n  tipo: v.tipo,\n  entrada: v.entrada,\n  imagens,\n  exportacao: { formatos: ['png'], escalas: [1] },\n} } }];"
+      },
+      "id": "c6f584e9-15b2-5a4f-8908-64bea0138655",
+      "name": "Montar pedido de produção",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "f8cceb6c-a585-5f34-88fc-da532adc79db",
+              "leftValue": "={{ $json.ok === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9d464f99-9a5f-555b-8053-d24dcdc5150e",
+      "name": "Pedido pronto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "650645cf-578c-5f4a-8ae0-8c06b75c47ca",
+      "name": "Parar gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        1160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "01073c6b-8d70-5f1b-a5e7-1f296dd33425",
+      "name": "Subir gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        1160
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.espera_subir_s }}",
+        "unit": "seconds"
+      },
+      "id": "3aea92a2-1669-5c61-9355-2e6af1606af8",
+      "name": "Esperar gerenciador subir",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        1120
+      ],
+      "webhookId": "c6580dae-64f4-5848-919e-74a13f7666ca"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "5bd3da68-05bd-52dd-892e-94e47b35a6d2",
+      "name": "Consultar saúde do gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        1520
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 8,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/integracao/producao",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json; charset=utf-8",
+        "body": "={{ JSON.stringify($('Montar pedido de produção').first().json.pedido) }}"
+      },
+      "id": "8d06f3b6-bc45-5878-9851-d197974e5bc5",
+      "name": "Produzir cards",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        1520
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst arquivos = (r.arquivos || []);\nreturn [{ json: {\n  ok: r.ok === true,\n  pasta: r.pasta,\n  geracao_id: r.geracao_id,\n  quantidade: arquivos.length,\n  arquivos: arquivos.map(a => a.caminho),\n  avisos: (r.avisos || []).map(a => (a.rotulo ? a.rotulo + ': ' : '') + a.mensagem),\n} }];"
+      },
+      "id": "4f55f0d5-5292-5ff8-b69f-a0c04069b7da",
+      "name": "Montar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "0399cd01-c9e3-5330-a6bc-6e494407a9bb",
+      "name": "Parar gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        1520
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Devolve o resultado da produção (os nós anteriores só desligaram o servidor e comentaram no Trello).\nconst t = $('Trello - Criar card').first().json;\nreturn [{ json: { ...$('Montar resultado').first().json, trello: t.shortUrl || t.url || t.id } }];"
+      },
+      "id": "a2fe61b0-a008-5fc9-a975-042422ffad4e",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nlet msg;\nif (j.motivo) {\n  msg = j.motivo;\n} else if (j.ready === false) {\n  msg = 'O gerador subiu, mas não está pronto: ' + (j.problems || []).join(' | ');\n} else if (j.error) {\n  const e = j.error;\n  msg = (e.message || JSON.stringify(e)) + (e.description ? ' — ' + e.description : '');\n} else if (j.stdout) {\n  msg = j.stdout;\n} else {\n  msg = 'Falha sem detalhe: ' + JSON.stringify(j).slice(0, 500);\n}\nreturn [{ json: { mensagem: msg } }];"
+      },
+      "id": "a2d76746-b3bc-5676-a8ca-9cb6850fecd3",
+      "name": "Montar mensagem de falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2480,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "3591e936-6188-5d0e-bdb3-ab6777f7a1ac",
+      "name": "Parar todos os servidores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2720,
+        1520
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "={{ $('Montar mensagem de falha').first().json.mensagem }}"
+      },
+      "id": "4645c429-3de8-5260-98ab-c7723174291a",
+      "name": "Falha no fluxo",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "cardComment",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Trello - Criar card').first().json.id }}"
+        },
+        "text": "={{ (() => {\n  const r = $('Montar resultado').first().json;\n  const linhas = ['Cards gerados automaticamente: ' + r.quantidade + ' imagens.', '', 'Pasta no computador:', r.pasta];\n  const ponte = $('Montar entrada dos cards').first().json.avisos_ponte || [];\n  if (ponte.length) linhas.push('', 'Avisos da montagem:', ...ponte.map(a => '- ' + a));\n  if (r.avisos && r.avisos.length) linhas.push('', 'Avisos do gerenciador:', ...r.avisos.map(a => '- ' + a));\n  return linhas.join('\\n').slice(0, 15000);\n})() }}"
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "name": "Trello - comentar cards prontos",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "id": "704e6330-3d96-593b-b513-c0d368370509",
+      "position": [
+        960,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "cardComment",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Trello - Criar card').first().json.id }}"
+        },
+        "text": "={{ (() => {\n  const msg = $('Montar mensagem de falha').first().json.mensagem;\n  const e = $('Montar entrada dos cards').first().json;\n  const entrada = JSON.stringify({ versao: 1, tipo: e.tipo, nome: e.nome, estilo_comum: e.estilo_comum, entrada: e.entrada, imagens: e.imagens }, null, 2);\n  return ['A arte NAO foi gerada: ' + msg, '',\n    'O texto deste card continua valendo. Para gerar so a arte depois: salve o JSON abaixo como',\n    'entradas/<nome>.json no computador e rode o workflow \"Notícias IA · 2. Arte (imagens + cards)\" com',\n    'esse nome em Configuração > arquivo_entrada.', '', '```', entrada, '```'].join('\\n').slice(0, 15000);\n})() }}"
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "name": "Trello - comentar falha",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "id": "afd8ff2c-8dde-5537-9d58-8cb76c77cb74",
+      "position": [
+        2960,
+        1520
+      ]
+    }
+  ],
+  "connections": {
+    "Toda segunda 15h": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Memoria - ler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria - ler": {
+      "main": [
+        [
+          {
+            "node": "Memoria Termos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Termos": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Dicionario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Dicionario",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Dicionario": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "IF - Parse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Parse OK?": {
+      "main": [
+        [
+          {
+            "node": "Normaliza termo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse falhou",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza termo": {
+      "main": [
+        [
+          {
+            "node": "Adiciona slide de CTA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adiciona slide de CTA": {
+      "main": [
+        [
+          {
+            "node": "Monta descricao do card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta descricao do card": {
+      "main": [
+        [
+          {
+            "node": "Trello - Criar card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - Criar card": {
+      "main": [
+        [
+          {
+            "node": "Checklist Producao",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memoria - gravar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar entrada dos cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checklist Producao": {
+      "main": [
+        [
+          {
+            "node": "Tarefas de producao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tarefas de producao": {
+      "main": [
+        [
+          {
+            "node": "Split Out tarefas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out tarefas": {
+      "main": [
+        [
+          {
+            "node": "Create checklist item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar entrada dos cards": {
+      "main": [
+        [
+          {
+            "node": "Validar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar entrada": {
+      "main": [
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerador": {
+      "main": [
+        [
+          {
+            "node": "Esperar gerador subir",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar gerador subir": {
+      "main": [
+        [
+          {
+            "node": "Consultar saúde do gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar saúde do gerador": {
+      "main": [
+        [
+          {
+            "node": "Gerador pronto?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerador pronto?": {
+      "main": [
+        [
+          {
+            "node": "Montar pedidos de imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar pedidos de imagem": {
+      "main": [
+        [
+          {
+            "node": "Enfileirar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enfileirar imagem": {
+      "main": [
+        [
+          {
+            "node": "Reunir tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reunir tickets": {
+      "main": [
+        [
+          {
+            "node": "Esperar geração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar geração": {
+      "main": [
+        [
+          {
+            "node": "Consultar andamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar andamento": {
+      "main": [
+        [
+          {
+            "node": "Avaliar andamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar andamento": {
+      "main": [
+        [
+          {
+            "node": "Imagens prontas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagens prontas?": {
+      "main": [
+        [
+          {
+            "node": "Listar tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ainda gerando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ainda gerando?": {
+      "main": [
+        [
+          {
+            "node": "Esperar geração",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar tickets": {
+      "main": [
+        [
+          {
+            "node": "Buscar caminho da imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar caminho da imagem": {
+      "main": [
+        [
+          {
+            "node": "Montar pedido de produção",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar pedido de produção": {
+      "main": [
+        [
+          {
+            "node": "Pedido pronto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedido pronto?": {
+      "main": [
+        [
+          {
+            "node": "Parar gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar gerador": {
+      "main": [
+        [
+          {
+            "node": "Subir gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Esperar gerenciador subir",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar gerenciador subir": {
+      "main": [
+        [
+          {
+            "node": "Consultar saúde do gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar saúde do gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Produzir cards",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produzir cards": {
+      "main": [
+        [
+          {
+            "node": "Montar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resultado": {
+      "main": [
+        [
+          {
+            "node": "Parar gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagem de falha": {
+      "main": [
+        [
+          {
+            "node": "Parar todos os servidores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Trello - comentar cards prontos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - comentar cards prontos": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar todos os servidores": {
+      "main": [
+        [
+          {
+            "node": "Trello - comentar falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - comentar falha": {
+      "main": [
+        [
+          {
+            "node": "Falha no fluxo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
