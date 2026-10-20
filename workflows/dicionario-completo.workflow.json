@@ -821,7 +821,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const v = $('Validar entrada').first().json;\nconst tickets = $('Listar tickets').all();\nconst resultados = $input.all();\nconst imagens = [];\nconst problemas = [];\nresultados.forEach((r, i) => {\n  const t = tickets[i].json;\n  const caminho = r.json.output_path;\n  if (!r.json.ready || !caminho) {\n    problemas.push('card ' + t.card + ' (' + t.nome_arquivo + '): imagem sem caminho de arquivo');\n  } else {\n    imagens.push({ card: t.card, mascara: t.mascara, caminho });\n  }\n});\nif (problemas.length) return [{ json: { ok: false, motivo: problemas.join(' | ') } }];\nreturn [{ json: { ok: true, pedido: {\n  versao: 1,\n  nome: v.nome,\n  tipo: v.tipo,\n  entrada: v.entrada,\n  imagens,\n  exportacao: { formatos: ['png'], escalas: [1] },\n} } }];"
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst tickets = $('Listar tickets').all();\nconst resultados = $input.all();\nconst imagens = [];\nconst problemas = [];\nresultados.forEach((r, i) => {\n  const t = tickets[i].json;\n  const caminho = r.json.output_path;\n  if (!r.json.ready || !caminho) {\n    problemas.push('card ' + t.card + ' (' + t.nome_arquivo + '): imagem sem caminho de arquivo');\n  } else {\n    imagens.push({ card: t.card, mascara: t.mascara, caminho });\n  }\n});\nif (problemas.length) return [{ json: { ok: false, motivo: problemas.join(' | ') } }];\nreturn [{ json: { ok: true, pedido: {\n  versao: 1,\n  nome: v.nome,\n  tipo: v.tipo,\n  entrada: v.entrada,\n  imagens,\n  // instrucoes: true grava, ao lado dos PNG, o <base>_instrucoes.json: o arquivo que a tela do\n  // gerenciador reabre (\"Abrir a partir de instruções\") para corrigir qualquer detalhe de formatação.\n  exportacao: { formatos: ['png'], escalas: [1], instrucoes: true },\n} } }];"
       },
       "id": "c6f584e9-15b2-5a4f-8908-64bea0138655",
       "name": "Montar pedido de produção",
@@ -998,7 +998,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const r = $input.first().json;\nconst arquivos = (r.arquivos || []);\nreturn [{ json: {\n  ok: r.ok === true,\n  pasta: r.pasta,\n  geracao_id: r.geracao_id,\n  quantidade: arquivos.length,\n  arquivos: arquivos.map(a => a.caminho),\n  avisos: (r.avisos || []).map(a => (a.rotulo ? a.rotulo + ': ' : '') + a.mensagem),\n} }];"
+        "jsCode": "const r = $input.first().json;\nconst arquivos = (r.arquivos || []);\nreturn [{ json: {\n  ok: r.ok === true,\n  pasta: r.pasta,\n  instrucoes: r.instrucoes || null,   // caminho do .json de instruções (ao lado dos PNG)\n  geracao_id: r.geracao_id,\n  quantidade: arquivos.length,\n  arquivos: arquivos.map(a => a.caminho),\n  avisos: (r.avisos || []).map(a => (a.rotulo ? a.rotulo + ': ' : '') + a.mensagem),\n} }];"
       },
       "id": "4f55f0d5-5292-5ff8-b69f-a0c04069b7da",
       "name": "Montar resultado",
@@ -1112,7 +1112,7 @@
           "mode": "id",
           "value": "={{ $('Trello - Criar card').first().json.id }}"
         },
-        "text": "={{ (() => {\n  const r = $('Montar resultado').first().json;\n  const linhas = ['Cards gerados automaticamente: ' + r.quantidade + ' imagens.', '', 'Pasta no computador:', r.pasta];\n  const ponte = $('Montar entrada dos cards').first().json.avisos_ponte || [];\n  if (ponte.length) linhas.push('', 'Avisos da montagem:', ...ponte.map(a => '- ' + a));\n  if (r.avisos && r.avisos.length) linhas.push('', 'Avisos do gerenciador:', ...r.avisos.map(a => '- ' + a));\n  return linhas.join('\\n').slice(0, 15000);\n})() }}"
+        "text": "={{ (() => {\n  const r = $('Montar resultado').first().json;\n  const linhas = ['Cards gerados automaticamente: ' + r.quantidade + ' imagens.', '', 'Pasta no computador:', r.pasta];\n  linhas.push('', r.instrucoes\n    ? 'Para corrigir algum detalhe na tela do gerenciador, use \"Abrir a partir de instruções\" com:\\n' + r.instrucoes\n    : 'Atenção: o gerenciador não devolveu o .json de instruções.');\n  const ponte = $('Montar entrada dos cards').first().json.avisos_ponte || [];\n  if (ponte.length) linhas.push('', 'Avisos da montagem:', ...ponte.map(a => '- ' + a));\n  if (r.avisos && r.avisos.length) linhas.push('', 'Avisos do gerenciador:', ...r.avisos.map(a => '- ' + a));\n  return linhas.join('\\n').slice(0, 15000);\n})() }}"
       },
       "type": "n8n-nodes-base.trello",
       "typeVersion": 1,

@@ -22,6 +22,30 @@ Catálogo de **quando** cada fluxo entrou nesta pasta e **quem** o criou. Datas 
 4. **`dicionario-v1`**: o fluxo de texto do Dicionário IA que você já tinha: a IA escolhe um termo que a página ainda não explicou, escreve os slides, cria o card no Trello e grava o termo na memória (Data Table `dicionario_ia`). Dispara toda segunda às 15h. Sem arte.
 5. **`dicionario-completo`**: o `dicionario-v1` + a arte, como o `noticias-completo` faz com as notícias. Os 7 slides viram os 7 cards do conjunto `dict-v1` (capa, definição, 2 com imagem, texto, texto com início fino, encerramento), com **2 imagens** geradas. As imagens saem em `iaclube_n8n/dicionario/`.
 
+## O `.json` de instruções (para corrigir um card depois)
+
+Os três fluxos de arte (`noticias-2-arte`, `noticias-completo`, `dicionario-completo`) pedem ao gerenciador `exportacao.instrucoes: true`. Com isso, na pasta dos PNG (`~/Imagens/iaclube_n8n/<tipo>/<data_hora>/`) fica também o `<data>_<conjunto>_<assunto>_instrucoes.json`: o **mesmo arquivo** que a tela do gerenciador gera ao exportar. Para corrigir um detalhe de formatação, abra a tela do gerenciador e use **Abrir a partir de instruções** com esse arquivo; ajuste e exporte de novo.
+
+O caminho do arquivo aparece no comentário que o fluxo deixa no card do Trello (`noticias-completo`, `dicionario-completo`) e na saída do último nó (`instrucoes`). O `.json` **não** entra na lista `arquivos` (que só tem as imagens).
+
+**Exige o gerenciador atualizado.** A opção `exportacao.instrucoes` foi acrescentada ao `iaclube_n8n` em 20/10/2026 (antes a API não a aceitava: o pedido dava `422 pedido_invalido`). Se o gerenciador estiver de pé desde antes disso, reinicie-o; os fluxos o sobem e o desligam a cada execução, então basta rodar de novo.
+
+## Onde fica o token da ponte
+
+Os fluxos que geram arte (`noticias-2-arte`, `noticias-completo`, `dicionario-completo`) falam com a ponte (`scripts/ponte.py`) e mandam o token em todo pedido. Ele está **num lugar só por fluxo**: o nó **Configuração**, na **linha 7** do código dele:
+
+```js
+  token_ponte: 'COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA',
+```
+
+**Para trocar, no n8n (jeito normal):** abra o fluxo → clique duas vezes no nó **Configuração** → na linha 7, troque só o texto entre as aspas simples → salve. Faça isso em cada fluxo de arte que você usa.
+
+**Se preferir editar o arquivo `.json`:** o código do nó é uma string de uma linha só, então o token não está numa linha própria. Procure por `token_ponte:` (ou vá à linha do `"jsCode"` do nó Configuração: 49 no `noticias-2-arte`, 89 no `noticias-completo` e no `dicionario-completo`). Depois importe o arquivo de novo no n8n.
+
+**De onde vem o token:** a ponte mostra o token ao subir (`Token (cabeçalho X-Ponte-Token): ...`) e o guarda em `~/.config/iaclube-orquestracao/ponte.token`. Ele só muda se esse arquivo for apagado ou se a ponte subir com `--token` ou com a variável `IACLUBE_PONTE_TOKEN`. Se o fluxo falhar com `401` / `nao_autorizado`, o token do nó não confere com o da ponte.
+
+**Cuidado com o repositório:** trocar o token no n8n **não** altera os arquivos desta pasta. Se você exportar o fluxo de novo do n8n para cá, o token novo vai junto para o arquivo; tire-o (volte ao texto `COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA`) antes de commitar ou publicar.
+
 ## Notas
 
 1. **`noticias-2-arte` (antes `noticias-10-cards`).** Foi montado por Claude na sessão de **18/10/2026**, no outro usuário do computador (`yuri-santos`), conforme o [RELATORIO.md](../RELATORIO.md). A hora exata em que foi criado lá **não dá para saber**. O que existe é a hora em que chegou a esta pasta: todos os arquivos do repositório (este fluxo, `entradas/`, `scripts/`) têm o mesmo instante, 12:19:11, então vieram juntos numa cópia. O primeiro commit (`begin`, 12:35) é só a foto desse estado inicial.
