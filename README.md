@@ -2,37 +2,36 @@
 
 > **Atenção:** este README foi escrito antes da ponte (`scripts/ponte.py`) e descreve o desenho com *Execute Command*, que não funciona com o n8n em Docker. Leia primeiro o [RELATORIO.md](RELATORIO.md).
 
-Workflow do n8n que produz um carrossel de **Notícias IA**: gera as imagens das notícias no `iaclube_geracao_local`, monta os cards no `iaclube_n8n` (gerenciador de carrosséis) e devolve a pasta com as imagens prontas.
+Fluxos do n8n que produzem os carrosséis do IA Clube (**Notícias IA**, **Dicionário IA** e **Hands on**): a IA escreve o texto, o `iaclube_geracao_local` gera as imagens (nos conjuntos que têm), o `iaclube_n8n` (gerenciador de carrosséis) monta os cards, e o resultado volta como uma pasta de PNG e um card no Trello.
 
-Esta pasta **não altera** as outras duas: ela só as chama pela API, como os contratos delas já previam (quem orquestra é o n8n).
+Esta pasta só chama as outras duas pela API (quem orquestra é o n8n). Quando um fluxo precisou de algo que a API não tinha, a mudança foi feita no `iaclube_n8n` (por exemplo `exportacao.instrucoes` e a marca `@iaclube.help`).
 
 ## O que tem aqui
 
 ```
-workflows/                       os fluxos do n8n (Workflows → Import from File)
-  noticias-1-texto.workflow.json   1. texto: RSS → IA → card no Trello
-  noticias-2-arte.workflow.json    2. arte: arquivo de entradas/ → imagens → cards
-  noticias-completo.workflow.json  1 + 2 num fluxo só
-entradas/exemplo-noticias-10.json  entrada de exemplo do fluxo 2 (10 notícias + o prompt de cada imagem)
-scripts/ponte.py                   serviço HTTP no computador que o n8n (em Docker) chama
-scripts/servidor.sh                sobe, para e consulta os dois servidores
+workflows/                           os fluxos do n8n (Workflows → Import from File)
+  completo/                            os que fazem tudo: texto pela IA → arte → card no Trello
+    noticias-completo.workflow.json
+    dicionario-completo.workflow.json
+    hands_on-completo.workflow.json
+  noticias-1-texto.workflow.json       só o texto (RSS → IA → Trello)
+  noticias-2-arte.workflow.json        só a arte, a partir de um arquivo de entradas/
+  dicionario-v1.json                   só o texto do Dicionário IA
+  hands_on-v1.json                     só o texto do Hands on
+entradas/exemplo-noticias-10.json    entrada de exemplo do fluxo noticias-2-arte (10 notícias + o prompt de cada imagem)
+scripts/ponte.py                     serviço HTTP no computador que o n8n (em Docker) chama
+scripts/servidor.sh                  sobe, para e consulta os dois servidores
 ```
 
 ## Os fluxos
 
-| Arquivo | Nome no n8n | Começa com | Termina com | Use quando |
-|---|---|---|---|---|
-| `noticias-1-texto` | Notícias IA · 1. Texto (RSS → IA → Trello) | toda sexta 15h | card no Trello para revisão + memória gravada | quer só o texto, como hoje |
-| `noticias-2-arte` | Notícias IA · 2. Arte (imagens + cards) | botão, lendo um arquivo de `entradas/` | pasta com os cards prontos | já tem o texto e os prompts (ou a arte do completo falhou) |
-| `noticias-completo` | Notícias IA · Completo (texto → arte) | toda sexta 15h ou botão | card no Trello + pasta com os cards, comentada no card | quer a edição inteira de uma vez |
+| Conjunto | Só o texto | Só a arte | Completo | Dispara | Imagens |
+|---|---|---|---|---|---|
+| Notícias IA | `noticias-1-texto` | `noticias-2-arte` | `completo/noticias-completo` | sexta 15h | uma por notícia |
+| Dicionário IA | `dicionario-v1` | (não há) | `completo/dicionario-completo` | segunda 15h | 2 |
+| Hands on | `hands_on-v1` | (não há) | `completo/hands_on-completo` | quarta 15h | nenhuma |
 
-Os três usam a mesma **ponte** e as mesmas credenciais (Anthropic, Trello e a Data Table `noticias_ia`). Rode **um de cada vez**: o 1 e o completo gravam na mesma memória, e o 2 e o completo sobem e derrubam os mesmos servidores.
-
-### Como o completo junta os outros dois
-
-**Parte 1** é o `noticias-1-texto` (feeds RSS → memória na Data Table → a IA escolhe e escreve as notícias → card no Trello → grava a memória), com duas mudanças no prompt da IA: os limites de caracteres agora são os dos modelos `news` do gerenciador (título da capa 20, manchete 31, texto 90 a 167, item do índice 20) e cada notícia traz um `prompt_imagem` em inglês. **Montar entrada dos cards** transforma o resultado no mesmo JSON de `entradas/exemplo-noticias-10.json` (capa, índice, uma notícia por card, encerramento) e a **parte 2** é o `noticias-2-arte` sem alterações. No fim, o fluxo comenta no card do Trello a pasta com as imagens. Se a arte falhar, o comentário traz o JSON de entrada pronto: salve-o em `entradas/` e rode só o `noticias-2-arte` com ele.
-
-No nó **Configuração** do completo: `noticias_min`/`noticias_max` (padrão 4 a 6; com mais de 6 o Índice sai, porque o modelo tem 6 itens), `estilo_comum` das imagens, `assunto`, `marca`, além da ponte e do tamanho das imagens, como no `noticias-2-arte`.
+Todos usam a mesma **ponte**: rode um fluxo de cada vez. O que cada um faz, a ordem em que foram criados, onde fica o token da ponte, a marca dos cards e o `.json` de instruções estão em [workflows/README.md](workflows/README.md). O resto deste README descreve o fluxo de arte das Notícias (`noticias-2-arte`), que é o que as Notícias completas reaproveitam.
 
 ## O fluxo de arte (`noticias-2-arte`)
 

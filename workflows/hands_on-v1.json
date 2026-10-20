@@ -1,0 +1,650 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "content": "##Fluxo 2- mao na massa \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1728,
+        512
+      ],
+      "id": "134ee25e-44ab-4fb2-b9ca-858d78daaf11",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SLIDE DE FECHAMENTO -- FONTE UNICA DE VERDADE\n// O ultimo slide do carrossel e sempre este, e nao e escrito pela IA. Dois\n// motivos: a chamada da pagina nao deve variar de semana para semana, e o\n// aviso de onde esta o prompt precisa ser sempre verdadeiro. Enquanto essa\n// frase era gerada pelo modelo, ela apontava para lugares que nao existiam.\n// Se quiser mudar a chamada, mude AQUI e vale para todo Mao na Massa.\n\nconst PERFIL = '@iaclube';\nconst SITE = 'iaclube.help';\n\nconst d = $input.first().json;\n\nconst slideCta = {\n  papel: 'cta',\n  titulo: 'O prompt tá na legenda',\n  texto: `Copia, cola e testa hoje. Tem tutorial novo toda semana no ${PERFIL}, e mais conteúdo em ${SITE}.`\n};\n\nreturn [{\n  json: {\n    ...d,\n    slides: [...(d.slides || []), slideCta]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        528
+      ],
+      "id": "58a795a1-0a7c-4712-8fa1-65a1222a5319",
+      "name": "Adiciona slide de CTA",
+      "notes": "O texto do fechamento vive so aqui. Editar aqui muda todo Mao na Massa daqui pra frente."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                3
+              ],
+              "triggerAtHour": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1216,
+        528
+      ],
+      "id": "e117547c-f430-45ec-a7e6-ba42fa26d282",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Jbz4QytyqrKesXD0",
+          "mode": "list",
+          "cachedResultName": "tarefas_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/Jbz4QytyqrKesXD0"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1008,
+        528
+      ],
+      "id": "c6952dab-182d-4cfc-985d-8bebecdcf2b9",
+      "name": "Get row(s)1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Traz as tarefas do dia a dia que ja viraram post, para nao repetir o mesmo\n// caso de uso. Guarda tambem as ferramentas ja citadas: elas PODEM se repetir\n// (a mesma ferramenta resolve varias tarefas), mas e bom o modelo saber quais\n// ja apareceram muito, para variar o repertorio.\nconst linhas = $input.all().map(item => item.json);\n\nconst tarefasUsadas = linhas\n  .map(l => l.tarefa)\n  .filter(t => t);\n\nconst tarefasNormalizadas = linhas\n  .map(l => l.tarefa_normalizada || l.tarefa)\n  .filter(t => t);\n\n// ferramentas_citadas e gravado como texto separado por virgula;\n// aqui juntamos tudo e contamos quantas vezes cada uma apareceu.\nconst contagem = {};\nlinhas.forEach(l => {\n  String(l.ferramentas_citadas || '')\n    .split(',')\n    .map(f => f.trim())\n    .filter(f => f)\n    .forEach(f => { contagem[f] = (contagem[f] || 0) + 1; });\n});\n\nconst ferramentasFrequentes = Object.entries(contagem)\n  .sort((a, b) => b[1] - a[1])\n  .map(([nome, vezes]) => `${nome} (${vezes}x)`)\n  .join(', ');\n\nreturn [{\n  json: {\n    tarefas_usadas: tarefasUsadas.join(' | ') || 'nenhuma ainda',\n    tarefas_normalizadas: tarefasNormalizadas,\n    ferramentas_frequentes: ferramentasFrequentes || 'nenhuma ainda',\n    data_hoje: new Date().toLocaleDateString('pt-BR')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        528
+      ],
+      "id": "c28863cd-4563-4857-bb2b-c2370cdb3c9f",
+      "name": "Memoria Tarefas1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-6",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        -592,
+        352
+      ],
+      "id": "8195ff15-a852-4b01-8bc0-de91973206d1",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uq6VzyHMKMZCKDRL",
+          "name": "Anthropic account"
+        }
+      },
+      "notes": "Este e o modelo ativo. O node OpenAI ao lado esta desconectado -- ligue um ou outro, nunca os dois."
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-pro",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-pro"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -768,
+        336
+      ],
+      "id": "0401ab46-a04b-4f49-8783-c1643d7f16cf",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Qi02ZAkvb1kjIeTU",
+          "name": "OpenAI account"
+        }
+      },
+      "notes": "Reserva, desconectado de proposito. maxTokens definido para o caso de voce ligar: sem ele a OpenAI reserva o maximo do modelo e conta tudo contra o limite por minuto."
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca informacoes atuais na web sobre ferramentas de IA, planos gratuitos e passos de uso.",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"{searchTerm}\",\n  \"max_results\": 5,\n  \"include_answer\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -448,
+        336
+      ],
+      "id": "6103b813-ce09-4028-bdd4-c9298b80d19c",
+      "name": "Buscar na web1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "sJWbCUD6QWLknGeQ",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voce e o redator de conteudo do IAClube, uma pagina educativa sobre inteligencia\nartificial no Instagram, Facebook e LinkedIn.\n\nPERSONALIDADE DA MARCA\n- Tom explicativo e amigavel, como um amigo que entende de IA explicando pra outro\n- Nunca soa academico, arrogante ou robotico\n- Evita jargao sem explicar; quando usa um termo tecnico, explica na hora\n- Publico-alvo: pessoas de 18 a 30 anos, a maioria com conhecimento basico de\n  ferramentas de IA, mas parte do publico ja e intermediario/avancado -- por isso,\n  o tutorial tem que ser simples sem ser raso: alguem que ja manja tambem\n  precisa aprender um truque novo\n\nSUA TAREFA HOJE\nEscolher UMA tarefa chata, repetitiva ou demorada do dia a dia e ensinar, passo a\npasso, como resolver ela usando IA. O post e o \"Mao na Massa\": carrossel formato\ntutorial, com 5 a 9 slides escritos por voce (a automacao adiciona o slide de\nfechamento). A pessoa tem que conseguir reproduzir sozinha depois de ler.\n\nO protagonista do post e A TAREFA, nao a ferramenta. A ferramenta e so o meio.\nNao escreva uma resenha de produto: escreva um passo a passo de resolucao.\n\nHoje e {{ $json.data_hoje }}.\n\nTAREFAS JA ENSINADAS (nao repita nenhuma destas):\n{{ $json.tarefas_usadas }}\n\nFERRAMENTAS JA MUITO CITADAS (pode repetir se fizer sentido, mas evite usar\nsempre a mesma; varie o repertorio):\n{{ $json.ferramentas_frequentes }}\n\nCOMO ESCOLHER A TAREFA\n- Tem que ser algo concreto e reconhecivel, que faca a pessoa pensar \"eu perco\n  tempo com isso mesmo\". Exemplos de territorio: organizar anotacoes bagunçadas\n  de aula, transformar um PDF longo em resumo estudavel, responder e-mails\n  repetitivos, montar planilha a partir de dados soltos, renomear e organizar\n  arquivos em massa, preparar roteiro de estudo para prova, transcrever reuniao,\n  limpar e padronizar uma lista, criar legendas para videos\n- Evite tarefas genericas demais (\"usar IA para estudar\") -- precisa ser especifica\n  o bastante para caber num passo a passo\n- Prefira tarefas resolviveis com ferramentas gratuitas ou com plano free generoso\n\nPESQUISA\nVoce tem uma ferramenta de busca na web chamada \"Buscar na web\". Interfaces,\nlimites de plano gratuito e nomes de recurso mudam com frequencia. Antes de\nescrever o passo a passo, faca pelo menos uma busca para confirmar que a\nferramenta escolhida ainda existe, ainda tem plano gratuito e que os passos que\nvoce vai descrever batem com a interface atual. Se a busca nao confirmar algum\ndetalhe, escreva o passo de forma mais generica em vez de inventar nomes de botao\nou de menu que podem nao existir mais.\n\nESTRUTURA DO CARROSSEL (obrigatoria)\nCada slide tem um campo \"papel\", e o valor precisa ser exatamente um destes\ntres: \"gancho\", \"contexto\" ou \"desenvolvimento\". A ordem no array e sempre esta:\n\n1. \"gancho\" -- exatamente 1 slide, sempre o primeiro.\n   E a unica coisa que a pessoa ve antes de decidir se para ou continua rolando.\n   Ele nao ensina nada: ele nomeia a dor de um jeito que a pessoa se reconheca.\n   O mais forte aqui e custo concreto -- tempo perdido, frequencia, tamanho da\n   pilha (\"40 minutos toda sexta so pra renomear arquivo\"). Numero especifico\n   funciona melhor que \"muito tempo\".\n   Nao abra com \"voce sabe usar IA para X?\", \"hoje vamos aprender X\" nem\n   \"tutorial: como fazer X\" -- isso e titulo de aula, nao gancho.\n   Nao cite a ferramenta no gancho: quem ainda nao sabe o nome dela para de ler.\n\n2. \"contexto\" -- exatamente 1 slide, sempre o segundo.\n   E a promessa. Diz a tarefa, quanto tempo ela passa a levar e com qual\n   ferramenta -- sem ensinar ainda o como. A pessoa precisa terminar este slide\n   sabendo que tem solucao e ainda nao sabendo executa-la.\n\n3. \"desenvolvimento\" -- de 3 a 7 slides, na sequencia, ate o fim do array.\n   Sao os passos, um passo por slide, na ordem de execucao. Escreva de forma que\n   a pessoa consiga seguir com o celular na mao.\n   O penultimo slide de desenvolvimento traz o cuidado ou limitacao mais\n   importante -- quem chegou ate ali ja decidiu testar, entao e onde o aviso\n   pega. Se a IA resolve so parte da tarefa, diga aqui qual parte continua manual.\n\nNAO escreva slide de despedida, agradecimento, \"siga a pagina\" nem qualquer\nfechamento. O ultimo slide e fixo e a automacao adiciona sozinha -- se voce\nescrever um, ele vai aparecer duplicado.\n\nCOMO SEGURAR A ATENCAO\n- Cada passo entrega um resultado parcial visivel. Se um slide so prepara o\n  proximo sem entregar nada, junte os dois\n- Frases curtas, verbo no imperativo (\"cola o texto\", \"pede o resumo\")\n- No maximo UMA vez no carrossel inteiro voce pode mandar a pessoa arrastar\n  (\"arrasta pro lado\"). Retencao vem de curiosidade, nao de instrucao\n- Nome de botao, numero e exemplo concreto prendem mais que adjetivo\n  (\"facil\", \"incrivel\", \"revolucionario\")\n\nLIMITES DE CARACTERE (obrigatorios, o template de arte depende disso)\n- gancho: titulo ate 40, texto ate 90. O gancho e curto de proposito --\n  texto longo na capa e o jeito mais rapido de perder o leitor\n- contexto: titulo ate 40, texto entre 80 e 160\n- desenvolvimento: titulo ate 40, texto entre 90 e 180, com comprimento\n  parecido entre eles\n- passo_a_passo[]: cada passo em no maximo 180 caracteres\n- dor: no maximo 200 caracteres (vai no card, nao na arte)\nO prompt_exemplo NAO tem limite -- ele fica na legenda, nunca na arte.\n\nONDE FICA O PROMPT (regra fixa, nao invente outra)\nExiste UM lugar so para o prompt: a legenda. Siga isso literalmente:\n- Nenhum slide contem o texto do prompt. Ele nao cabe na arte e nao deve ser\n  quebrado em partes entre slides\n- Nenhum slide diz onde o prompt esta. O slide de fechamento, escrito pela\n  automacao, ja avisa que ele esta na legenda -- entao voce nao precisa\n  escrever \"o prompt completo esta na legenda\" em lugar nenhum\n- NUNCA escreva \"no proximo slide\", \"no slide a seguir\", \"logo abaixo\", \"aqui\n  embaixo\", \"nos comentarios\" ou \"no link da bio\" -- nenhuma dessas coisas vai\n  existir\n- Nas legendas, nao escreva onde o prompt esta e nao copie o texto dele. A\n  automacao anexa o bloco do prompt no fim de cada legenda na hora de publicar.\n  Escreva as tres legendas como texto completo por si so\n\nAS TRES LEGENDAS\nO carrossel e o MESMO nas tres redes. A unica coisa que muda e a legenda.\nEscreva as tres descrevendo a mesma peca, sem inventar conteudo diferente:\n- instagram: curta e envolvente, 1-2 emojis, termina com pergunta ou\n  call-to-action leve. Ate 600 caracteres\n- facebook: adaptacao da do Instagram, um pouco mais explicativa e com menos\n  dependencia de emoji, ja que o feed do Facebook favorece texto. Ate 800 caracteres\n- linkedin: mais analitica, sem emojis, tom profissional, pode trazer uma\n  implicacao pratica ou de produtividade no trabalho. Ate 1200 caracteres\n\nFORMATO DE SAIDA\nResponda APENAS com um JSON valido, sem nenhum texto antes ou depois, sem\nblocos de codigo markdown. Mesmo depois de usar a ferramenta de busca, sua\nresposta final deve ser SO o JSON. Siga exatamente esta estrutura:\n\n{\n  \"tarefa\": \"a tarefa do dia a dia sendo resolvida, em poucas palavras\",\n  \"dor\": \"1-2 frases sobre por que essa tarefa e chata ou demorada hoje\",\n  \"tempo_antes\": \"estimativa realista de quanto tempo leva na mao (ex: '40 min')\",\n  \"tempo_depois\": \"estimativa realista de quanto leva com IA (ex: '5 min')\",\n  \"ferramentas\": [\"nome da ferramenta usada\", \"outra, se houver\"],\n  \"custo\": \"resumo curto: gratuito, tem plano free limitado, ou pago -- e o que muda\",\n  \"passo_a_passo\": [\"passo 1 em uma frase\", \"passo 2 em uma frase\"],\n  \"prompt_exemplo\": \"o prompt pronto para copiar e colar, escrito por extenso\",\n  \"cuidados\": [\"o que conferir ou evitar\", \"outro cuidado\"],\n  \"slides\": [\n    {\"papel\": \"gancho\", \"titulo\": \"titulo curto\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"contexto\", \"titulo\": \"titulo curto\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo\": \"titulo curto\", \"texto\": \"texto do slide\"}\n  ],\n  \"legendas\": {\n    \"instagram\": \"...\",\n    \"facebook\": \"...\",\n    \"linkedin\": \"...\"\n  },\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"tema_card\": \"titulo curto que identifica essa peca de conteudo\",\n  \"fontes\": [\"url consultada 1\", \"url consultada 2\"]\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -576,
+        544
+      ],
+      "id": "7ebd5714-5c1a-4414-81e1-136197e59d85",
+      "name": "AI Agent - Mao na Massa1",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "retryOnFail: cobre 429 de rate limit, que se resolve sozinho na janela seguinte."
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const raw = $input.first().json.output;\n\n  // A IA as vezes envolve o JSON em blocos de codigo markdown (```json ... ```).\n  let clean = String(raw).replace(/```json|```/g, '').trim();\n\n  // Com tool de busca conectada, o modelo as vezes escreve uma frase antes do JSON.\n  // Recorta do primeiro '{' ate o ultimo '}' para isolar so o objeto.\n  const inicio = clean.indexOf('{');\n  const fim = clean.lastIndexOf('}');\n  if (inicio !== -1 && fim !== -1) {\n    clean = clean.slice(inicio, fim + 1);\n  }\n\n  const parsed = JSON.parse(clean);\n\n  // ---------- 1) CONTRATO MINIMO ----------\n  const faltando = [];\n  for (const campo of ['tarefa', 'tema_card', 'dor', 'prompt_exemplo']) {\n    if (!parsed[campo]) faltando.push(campo);\n  }\n  for (const campo of ['slides', 'passo_a_passo', 'cuidados']) {\n    if (!Array.isArray(parsed[campo]) || parsed[campo].length === 0) faltando.push(campo);\n  }\n  if (!parsed.legendas) faltando.push('legendas');\n  else {\n    for (const rede of ['instagram', 'facebook', 'linkedin']) {\n      if (!parsed.legendas[rede]) faltando.push('legendas.' + rede);\n    }\n  }\n\n  if (faltando.length) {\n    return [{ json: { erro: true, mensagem: 'Campos ausentes: ' + faltando.join(', '), bruto: clean } }];\n  }\n\n  const avisos = [];\n\n  // ---------- 2) NORMALIZACAO DE PAPEIS ----------\n  // A estrutura narrativa e o ponto do post, entao ela e reparada aqui em vez de\n  // derrubar o roteiro inteiro. So bloqueia o que nao da para reconstruir.\n  let slides = parsed.slides\n    .filter(s => s && (s.titulo || s.texto))\n    .map(s => ({\n      papel: String(s.papel || '').trim().toLowerCase(),\n      titulo: String(s.titulo || '').trim(),\n      texto: String(s.texto || '').trim()\n    }));\n\n  // A IA foi instruida a nao escrever fechamento. Se escrever, o slide sai aqui\n  // -- o CTA real e adicionado depois, por codigo, sempre igual.\n  const ehFechamento = (s) => /sig(a|ue) (a p[aá]gina|o @|a gente)|nos sig(a|ue)|obrigad[oa] por|at[eé] a pr[oó]xima|salve esse post|compartilhe esse post|link (na|da) bio/i.test(s.titulo + ' ' + s.texto);\n  const ultimo = slides[slides.length - 1];\n  const cta_indevido = slides.filter(s => s.papel === 'cta' || (s === ultimo && ehFechamento(s)));\n  if (cta_indevido.length) {\n    slides = slides.filter(s => !cta_indevido.includes(s));\n    avisos.push('a IA escreveu ' + cta_indevido.length + ' slide(s) de fechamento; foram removidos');\n  }\n\n  // Papel ausente (formato antigo) ou fora de ordem: reconstroi por posicao.\n  const semPapel = slides.filter(s => !['gancho', 'contexto', 'desenvolvimento'].includes(s.papel));\n  if (semPapel.length) {\n    avisos.push('papel ausente ou invalido em ' + semPapel.length + ' slide(s); atribuido por posicao');\n  }\n  const gancho = slides.find(s => s.papel === 'gancho') || slides[0];\n  const contexto = slides.find(s => s.papel === 'contexto' && s !== gancho) ||\n                   slides.find(s => s !== gancho);\n  const desenvolvimento = slides.filter(s => s !== gancho && s !== contexto);\n\n  if (!gancho || !contexto || desenvolvimento.length === 0) {\n    return [{ json: { erro: true, mensagem: 'Estrutura insuficiente: precisa de gancho + contexto + ao menos 1 desenvolvimento. Vieram ' + slides.length + ' slides.', bruto: clean } }];\n  }\n\n  const ordemOriginal = slides.map(s => s.papel).join(',');\n  gancho.papel = 'gancho';\n  contexto.papel = 'contexto';\n  desenvolvimento.forEach(s => { s.papel = 'desenvolvimento'; });\n  slides = [gancho, contexto, ...desenvolvimento];\n  if (ordemOriginal !== slides.map(s => s.papel).join(',') && !semPapel.length) {\n    avisos.push('slides estavam fora da ordem gancho > contexto > desenvolvimento; reordenados');\n  }\n\n  // ---------- 3) AVISOS DE FORMA (nao bloqueiam) ----------\n  if (desenvolvimento.length < 3) avisos.push('so ' + desenvolvimento.length + ' slide(s) de passo a passo (esperado 3 a 7)');\n  if (desenvolvimento.length > 7) avisos.push(desenvolvimento.length + ' slides de passo a passo (esperado 3 a 7)');\n\n  const limites = {\n    gancho: { min: 0, max: 90 },\n    contexto: { min: 80, max: 160 },\n    desenvolvimento: { min: 90, max: 180 }\n  };\n  slides.forEach((s, i) => {\n    const lim = limites[s.papel];\n    const n = s.texto.length;\n    if (n > lim.max) avisos.push('slide ' + (i + 1) + ' (' + s.papel + ') com ' + n + ' chars, limite ' + lim.max);\n    if (lim.min && n < lim.min) avisos.push('slide ' + (i + 1) + ' (' + s.papel + ') com ' + n + ' chars, minimo ' + lim.min);\n    if (s.titulo.length > 40) avisos.push('titulo do slide ' + (i + 1) + ' com ' + s.titulo.length + ' chars, limite 40');\n  });\n\n  parsed.passo_a_passo.forEach((p, i) => {\n    const n = String(p || '').length;\n    if (n > 180) avisos.push('passo ' + (i + 1) + ' do passo a passo com ' + n + ' chars, limite 180');\n  });\n\n  // Gancho que abre como aula em vez de nomear a dor.\n  if (/^(voce sabe|você sabe|hoje (vamos|eu vou)|tutorial|aprenda a|como fazer)\\b/i.test(gancho.titulo + ' ' + gancho.texto)) {\n    avisos.push('o gancho abre como titulo de aula -- reescrever como custo concreto antes de aprovar');\n  }\n\n  // ---------- 4) REFERENCIA QUEBRADA ----------\n  // O prompt so existe na legenda, e quem avisa isso e o slide de CTA fixo.\n  const proibido = /pr[oó]ximo slide|slide seguinte|slide a seguir|logo abaixo|aqui embaixo|nos coment[aá]rios|link da bio/i;\n  const apontaLegenda = /na legenda|da legenda/i;\n\n  slides.forEach((s, i) => {\n    const texto = `${s.titulo} ${s.texto}`;\n    if (proibido.test(texto)) avisos.push(`slide ${i + 1} aponta para lugar inexistente`);\n    if (apontaLegenda.test(texto)) avisos.push(`slide ${i + 1} menciona a legenda -- isso agora e papel do slide de fechamento, vai sair repetido`);\n  });\n\n  for (const rede of ['instagram', 'facebook', 'linkedin']) {\n    if (proibido.test(parsed.legendas[rede])) avisos.push(`legenda ${rede} aponta para lugar inexistente`);\n  }\n\n  return [{ json: { ...parsed, slides, erro: false, avisos } }];\n} catch (e) {\n  return [{ json: { erro: true, mensagem: e.message } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        528
+      ],
+      "id": "7e556051-de8e-4071-87c5-a81319354fb2",
+      "name": "Parse1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1a2b3c4-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.erro }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        528
+      ],
+      "id": "efc4bb83-0d5a-4287-afcc-de19494ec0cc",
+      "name": "IF - Parse OK?1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        80,
+        672
+      ],
+      "id": "5ec7e181-fcdd-4b0b-ae38-e8f711d76e5c",
+      "name": "Parse falhou1",
+      "notes": "Ramo falso. Abra o item aqui para ver 'mensagem' e 'bruto' quando a IA devolver JSON invalido ou incompleto."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza o nome da tarefa antes de gravar na memoria:\n// minusculo, sem acento, sem pontuacao. Evita que \"Resumir PDFs\" e\n// \"resumir pdf!\" sejam tratados como tarefas diferentes na proxima semana.\nfunction normalizar(texto) {\n  return String(texto || \"\")\n    .trim()\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s]/g, \"\")\n    .replace(/\\s+/g, \" \");\n}\n\nconst dados = $input.first().json;\n\n// Garante que os campos de lista existam, para as expressoes seguintes\n// nao quebrarem caso o modelo esqueca algum campo.\nfunction lista(valor) {\n  return Array.isArray(valor) ? valor : [];\n}\n\nconst ferramentas = lista(dados.ferramentas);\n\nreturn [{\n  json: {\n    ...dados,\n    ferramentas,\n    passo_a_passo: lista(dados.passo_a_passo),\n    cuidados: lista(dados.cuidados),\n    slides: lista(dados.slides),\n    hashtags: lista(dados.hashtags),\n    fontes: lista(dados.fontes),\n    prompt_exemplo: String(dados.prompt_exemplo || ''),\n    tarefa_normalizada: normalizar(dados.tarefa),\n    // guardado como texto simples: a Data Table nao tem coluna do tipo lista\n    ferramentas_citadas: ferramentas.join(', '),\n    data: new Date().toISOString(),\n    status: \"gerado\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        528
+      ],
+      "id": "9d043c71-3023-487a-8254-cc47336b1159",
+      "name": "Normaliza tarefa1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONTRATO COM O FLUXO DE DESIGN\n// A descricao do card pai e a fonte unica de verdade. O fluxo de design le esta\n// descricao e corta pelos cabecalhos '## ' abaixo -- os mesmos usados nos fluxos\n// de segunda e sexta, para um parser so atender os tres. Se voce editar o texto\n// no Trello durante a revisao, edite DENTRO das secoes: nao apague nem renomeie\n// os cabecalhos, senao o parser do design nao encontra nada.\n//\n// Cada slide vem marcado com o papel narrativo (GANCHO / CONTEXTO /\n// DESENVOLVIMENTO / CTA). O papel escolhe o layout na hora da arte, entao nao\n// remova o slide de CTA nem troque a ordem dos papeis na revisao.\n//\n// SOBRE O PROMPT: ele existe em UM lugar so, a secao '## PROMPT PRONTO'.\n// A publicacao anexa esse bloco no fim de cada legenda. Por isso as legendas\n// aqui terminam com um marcador -- e lembrete de que o texto publicado vai ser\n// maior que o que voce ve, e de que editar o prompt e editar um lugar so.\n\nconst d = $input.first().json;\n\nconst MARCADOR = '>> Na publicacao, o bloco PROMPT PRONTO entra aqui.';\n\nconst slides = d.slides\n  .map((s, i) => `### ${i + 1} | ${String(s.papel || '').toUpperCase()} | ${s.titulo}\\n${s.texto}`)\n  .join('\\n\\n');\n\nconst passos = d.passo_a_passo\n  .map((p, i) => `${i + 1}. ${p}`)\n  .join('\\n');\n\nconst cuidados = d.cuidados\n  .map(c => `- ${c}`)\n  .join('\\n');\n\n// Linha comecando com '#' vira titulo no markdown do Trello e a primeira\n// hashtag some da tela. A barra invertida escapa; o parser do design remove.\nconst hashtags = d.hashtags.join(' ').replace(/^#/, '\\\\#');\n\nconst partes = [\n  d.dor,\n  '',\n  '## RESUMO',\n  `Tarefa: ${d.tarefa}`,\n  `Tempo: ${d.tempo_antes} na mao -> ${d.tempo_depois} com IA`,\n  `Ferramentas: ${d.ferramentas.join(', ')}`,\n  `Custo: ${d.custo}`,\n  '',\n  '## PASSO A PASSO',\n  passos,\n  '',\n  '## PROMPT PRONTO',\n  d.prompt_exemplo,\n  '',\n  '## CUIDADOS',\n  cuidados,\n  '',\n  '## SLIDES',\n  slides,\n  '',\n  '## LEGENDA INSTAGRAM',\n  d.legendas.instagram,\n  MARCADOR,\n  '',\n  '## LEGENDA FACEBOOK',\n  d.legendas.facebook,\n  MARCADOR,\n  '',\n  '## LEGENDA LINKEDIN',\n  d.legendas.linkedin,\n  MARCADOR,\n  '',\n  '## HASHTAGS',\n  hashtags,\n  '',\n  '## FONTES',\n  d.fontes.join('\\n')\n];\n\nif (d.avisos && d.avisos.length) {\n  partes.push('', '## AVISOS DA AUTOMACAO', d.avisos.map(a => `- ${a}`).join('\\n'));\n}\n\nreturn [{\n  json: {\n    ...d,\n    descricao: partes.join('\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        528
+      ],
+      "id": "9e5ef85d-7d98-4177-a008-cdda0d5c9bea",
+      "name": "Monta descricao do card1"
+    },
+    {
+      "parameters": {
+        "listId": "6a58788f7a2e4212ebe645fc",
+        "name": "=Mao na Massa | {{ $json.tema_card }}",
+        "description": "={{ $json.descricao }}",
+        "additionalFields": {
+          "idLabels": "6a58788f7a2e4212ebe64608"
+        }
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        528,
+        528
+      ],
+      "id": "f7ceadfe-5493-47b1-a033-457b3b75389e",
+      "name": "Trello - Create Card (pai)1",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      },
+      "notes": "Unico card criado por execucao. Sem label de rede -- e assim que o fluxo de polling reconhece que e card pai."
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Jbz4QytyqrKesXD0",
+          "mode": "list",
+          "cachedResultName": "tarefas_ia",
+          "cachedResultUrl": "/projects/pUcnqJeJi87otw96/datatables/Jbz4QytyqrKesXD0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tarefa": "={{ $('Normaliza tarefa1').first().json.tarefa }}",
+            "tarefa_normalizada": "={{ $('Normaliza tarefa1').first().json.tarefa_normalizada }}",
+            "ferramentas_citadas": "={{ $('Normaliza tarefa1').first().json.ferramentas_citadas }}",
+            "data": "={{ $('Normaliza tarefa1').first().json.data }}",
+            "status": "={{ $('Normaliza tarefa1').first().json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "tarefa",
+              "displayName": "tarefa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tarefa_normalizada",
+              "displayName": "tarefa_normalizada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ferramentas_citadas",
+              "displayName": "ferramentas_citadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        752,
+        672
+      ],
+      "id": "a0d0750b-13e8-47bc-9861-4325cc392391",
+      "name": "Memoria1",
+      "notes": "A tabela tarefas_ia precisa ter as 5 colunas listadas aqui. Coluna faltando = erro 'unknown column name'."
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "create",
+        "cardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "name": "Producao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        752,
+        432
+      ],
+      "id": "c4339752-4bf6-4710-a153-7c8fef74bc59",
+      "name": "Checklist Producao1",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Depois do node de checklist, $json e o objeto da checklist -- entao $json.id\n// e o checklistId. Um item entra e um item sai: sem risco de pareamento.\nconst checklistId = $input.first().json.id;\n\n// A validacao pratica vem antes da arte: se o passo a passo nao funcionar na\n// vida real, o carrossel inteiro precisa ser refeito.\nconst tarefas = [\n  'Executar o passo a passo na pratica e confirmar que funciona',\n  'Testar o prompt de exemplo e ajustar se necessario',\n  'Conferir as fontes citadas',\n  'Ler so o slide 1: a dor esta concreta o bastante para parar o scroll?',\n  'Conferir se o slide 2 promete sem ensinar (ele segura quem parou)',\n  'Revisar as tres legendas',\n  'Aprovar texto (mover card para Aprovado)',\n  'Gerar arte do carrossel',\n  'Aprovar arte',\n  'Publicar nas tres redes'\n];\n\nreturn [{ json: { checklistId, tarefas } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        432
+      ],
+      "id": "92dfb3f1-9aa8-44c1-bb09-d44c87f0b5f6",
+      "name": "Tarefas de producao1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tarefas",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        432
+      ],
+      "id": "b4dd97b0-2389-4de0-8848-00709202f9c8",
+      "name": "Split Out tarefas1"
+    },
+    {
+      "parameters": {
+        "resource": "checklist",
+        "operation": "createCheckItem",
+        "checklistId": "={{ $json.checklistId }}",
+        "name": "={{ $json.tarefas }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        432
+      ],
+      "id": "b6f25a54-2fda-4035-aa07-d5d0aa03f4cb",
+      "name": "Create checklist item1",
+      "credentials": {
+        "trelloApi": {
+          "id": "ip4xO8WNzsHKGqoE",
+          "name": "Trello account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Adiciona slide de CTA": {
+      "main": [
+        [
+          {
+            "node": "Monta descricao do card1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)1": {
+      "main": [
+        [
+          {
+            "node": "Memoria Tarefas1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Tarefas1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Mao na Massa1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Mao na Massa1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar na web1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Mao na Massa1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Mao na Massa1": {
+      "main": [
+        [
+          {
+            "node": "Parse1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse1": {
+      "main": [
+        [
+          {
+            "node": "IF - Parse OK?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Parse OK?1": {
+      "main": [
+        [
+          {
+            "node": "Normaliza tarefa1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse falhou1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza tarefa1": {
+      "main": [
+        [
+          {
+            "node": "Adiciona slide de CTA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta descricao do card1": {
+      "main": [
+        [
+          {
+            "node": "Trello - Create Card (pai)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trello - Create Card (pai)1": {
+      "main": [
+        [
+          {
+            "node": "Checklist Producao1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memoria1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checklist Producao1": {
+      "main": [
+        [
+          {
+            "node": "Tarefas de producao1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tarefas de producao1": {
+      "main": [
+        [
+          {
+            "node": "Split Out tarefas1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out tarefas1": {
+      "main": [
+        [
+          {
+            "node": "Create checklist item1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "a191c120e23d4b5efde4f49aaab9932ab4d273166452afd8ccf065afbded6fd8"
+  }
+}
