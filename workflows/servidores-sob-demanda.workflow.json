@@ -47,7 +47,6 @@
             }
           ]
         },
-        "responseMode": "responseNode",
         "options": {
           "buttonLabel": "Ligar agora",
           "appendAttribution": false
@@ -56,7 +55,7 @@
       "id": "2c20c573-bf4a-5d06-b97f-ffbec2104575",
       "name": "Formulário: ligar",
       "type": "n8n-nodes-base.formTrigger",
-      "typeVersion": 2.2,
+      "typeVersion": 2.3,
       "position": [
         0,
         0
@@ -83,7 +82,6 @@
             }
           ]
         },
-        "responseMode": "responseNode",
         "options": {
           "buttonLabel": "Desligar",
           "appendAttribution": false
@@ -92,7 +90,7 @@
       "id": "fe0cffc1-8501-58b0-b5a7-fb2f8226ee3a",
       "name": "Formulário: desligar",
       "type": "n8n-nodes-base.formTrigger",
-      "typeVersion": 2.2,
+      "typeVersion": 2.3,
       "position": [
         0,
         1000
@@ -225,7 +223,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const j = $input.first().json;\nconst linhas = [j.titulo, ''].concat((j.detalhes || []).map(d => '• ' + d));\nlinhas.push('', 'Tente de novo quando o outro uso terminar.');\nreturn [{ json: { mensagem: linhas.join('\\n') } }];"
+        "jsCode": "const j = $input.first().json;\nconst linhas = (j.detalhes || []).map(d => '• ' + d);\nlinhas.push('', 'Tente de novo quando o outro uso terminar.');\nreturn [{ json: { titulo: j.titulo, mensagem: linhas.join('\\n') } }];"
       },
       "id": "7d92e092-9870-59ef-930c-dda565a2d8af",
       "name": "Montar aviso",
@@ -238,14 +236,20 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ $json.titulo }}",
+        "completionMessage": "={{ $json.mensagem }}",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 2,
+        "resumeUnit": "minutes",
         "options": {}
       },
       "id": "f0b18fb8-3da1-52a3-ba13-9f182447c5ee",
       "name": "Responder: aviso",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
       "position": [
         1700,
         20
@@ -405,7 +409,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Configuração').first().json;\nconst fim = new Date(Date.now() + cfg.minutos * 60000);\nconst hora = fim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });\nconst linhas = [\n  'Servidores ligados por ' + cfg.minutos + ' minutos (desligam sozinhos às ' + hora + ').',\n  '',\n  'Gerador de imagens: http://127.0.0.1:' + cfg.porta_gerador,\n  'Gerenciador de carrosséis: http://127.0.0.1:' + cfg.porta_gerenciador,\n  '',\n  'Abra os endereços neste computador. Para desligar antes, use o formulário Desligar.',\n];\nreturn [{ json: { mensagem: linhas.join('\\n'), desliga_as: hora } }];"
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst fim = new Date(Date.now() + cfg.minutos * 60000);\nconst hora = fim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });\nconst gerador = 'http://127.0.0.1:' + cfg.porta_gerador;\nconst gerenciador = 'http://127.0.0.1:' + cfg.porta_gerenciador;\nconst linhas = [\n  'Ligados por ' + cfg.minutos + ' minutos: desligam sozinhos às ' + hora + '.',\n  '',\n  '<b>Gerador de imagens:</b> <a href=\"' + gerador + '\" target=\"_blank\">' + gerador + '</a>',\n  '<b>Gerenciador de carrosséis:</b> <a href=\"' + gerenciador + '\" target=\"_blank\">' + gerenciador + '</a>',\n  '',\n  'Abra os endereços neste computador. Para desligar antes, use o formulário Desligar.',\n];\nreturn [{ json: { titulo: 'Servidores ligados', mensagem: linhas.join('\\n'), desliga_as: hora } }];"
       },
       "id": "c66d0248-5008-5cbd-b077-f4968fdae1b2",
       "name": "Montar mensagem de sucesso",
@@ -418,14 +422,20 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ $json.titulo }}",
+        "completionMessage": "={{ $json.mensagem }}",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 2,
+        "resumeUnit": "minutes",
         "options": {}
       },
       "id": "1542bc75-9f5f-5697-98af-c5fb84114989",
       "name": "Responder: sucesso",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
       "position": [
         3140,
         -220
@@ -539,7 +549,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const motivo = $('Montar mensagem de falha').first().json.motivo;\nconst desligou = $input.first().json.ok === true;\nconst linhas = ['Não foi possível ligar os servidores.', '', 'Motivo: ' + motivo, '',\n  desligou ? 'Os dois servidores foram desligados.' : 'Não consegui confirmar o desligamento (a ponte pode estar fora do ar). Confira as portas 7000 e 8000.'];\nreturn [{ json: { mensagem: linhas.join('\\n') } }];"
+        "jsCode": "const motivo = $('Montar mensagem de falha').first().json.motivo;\nconst desligou = $input.first().json.ok === true;\nconst esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst linhas = ['Motivo: ' + esc(motivo), '',\n  desligou ? 'Os dois servidores foram desligados.' : 'Não consegui confirmar o desligamento (a ponte pode estar fora do ar). Confira as portas 7000 e 8000.'];\nreturn [{ json: { titulo: 'Não foi possível ligar os servidores', mensagem: linhas.join('\\n') } }];"
       },
       "id": "ca5ddc0c-c182-506c-a352-2c900e2ecc27",
       "name": "Texto da falha",
@@ -552,14 +562,20 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ $json.titulo }}",
+        "completionMessage": "={{ $json.mensagem }}",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 2,
+        "resumeUnit": "minutes",
         "options": {}
       },
       "id": "71f4cad5-5a9e-5494-9b3a-e80790c1b00d",
       "name": "Responder: falha",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
       "position": [
         3140,
         760
@@ -568,7 +584,7 @@
     {
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "={{ $('Texto da falha').first().json.mensagem }}"
+        "errorMessage": "={{ $('Texto da falha').first().json.titulo + ' — ' + $('Texto da falha').first().json.mensagem.replace(/<[^>]*>/g, '') }}"
       },
       "id": "1063872c-adf2-575d-a600-4f8cf7682928",
       "name": "Falha no fluxo",
@@ -613,7 +629,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const r = $input.first().json;\nlet linhas;\nif (r.ok === true && Array.isArray(r.servidores)) {\n  linhas = ['Pronto.', ''].concat(r.servidores.map(s => '• ' + s.servidor + ': ' + (s.parou ? 'desligado' : (s.mensagem || 'nada a desligar'))));\n  linhas.push('', 'Servidores que não foram ligados por este fluxo não são desligados por ele.');\n} else {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || (r.error && (r.error.message || r.error)) || 'a ponte não respondeu';\n  linhas = ['Não consegui desligar.', '', 'Motivo: ' + motivo, 'Confira as portas 7000 e 8000.'];\n}\nreturn [{ json: { mensagem: linhas.join('\\n') } }];"
+        "jsCode": "const r = $input.first().json;\nlet linhas;\nif (r.ok === true && Array.isArray(r.servidores)) {\n  linhas = [''].concat(r.servidores.map(s => '• ' + s.servidor + ': ' + (s.parou ? 'desligado' : (s.mensagem || 'nada a desligar'))));\n  linhas.push('', 'Servidores que não foram ligados por este fluxo não são desligados por ele.');\n} else {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || (r.error && (r.error.message || r.error)) || 'a ponte não respondeu';\n  linhas = ['Motivo: ' + String(motivo).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'Confira as portas 7000 e 8000.'];\n}\nconst ok = r.ok === true && Array.isArray(r.servidores);\nreturn [{ json: { titulo: ok ? 'Servidores desligados' : 'Não consegui desligar', mensagem: linhas.join('\\n').trim() } }];"
       },
       "id": "e7798809-4608-5740-81da-18b985fe069f",
       "name": "Texto do desligamento",
@@ -626,14 +642,20 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "={{ $json.titulo }}",
+        "completionMessage": "={{ $json.mensagem }}",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 2,
+        "resumeUnit": "minutes",
         "options": {}
       },
       "id": "eeab0dc1-f597-5c42-b34e-de7364184f7f",
       "name": "Responder: desligado",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
       "position": [
         1220,
         1000
