@@ -16,6 +16,7 @@ workflows/                           os fluxos do n8n (Workflows → Import from
     hands_on-completo.workflow.json
   noticias-1-texto.workflow.json       só o texto (RSS → IA → Trello)
   noticias-2-arte.workflow.json        só a arte, a partir de um arquivo de entradas/
+  servidores-sob-demanda.workflow.json liga os dois servidores por um tempo, para mexer nas telas (sem produzir nada)
   dicionario-v1.json                   só o texto do Dicionário IA
   hands_on-v1.json                     só o texto do Hands on
 entradas/exemplo-noticias-10.json    entrada de exemplo do fluxo noticias-2-arte (10 notícias + o prompt de cada imagem)
@@ -32,6 +33,17 @@ scripts/servidor.sh                  sobe, para e consulta os dois servidores
 | Hands on | `hands_on-v1` | (não há) | `completo/hands_on-completo` | quarta 15h | nenhuma |
 
 Todos usam a mesma **ponte**: rode um fluxo de cada vez. O que cada um faz, a ordem em que foram criados, onde fica o token da ponte, a marca dos cards e o `.json` de instruções estão em [workflows/README.md](workflows/README.md). O resto deste README descreve o fluxo de arte das Notícias (`noticias-2-arte`), que é o que as Notícias completas reaproveitam.
+
+## Ligar os servidores só para mexer nas telas (`servidores-sob-demanda`)
+
+Para quem não quer rodar um fluxo de produção, só abrir o gerador de imagens (porta 7000) e o gerenciador de carrosséis (porta 8000) no navegador. Duas entradas, ambas formulários do n8n:
+
+- **Ligar:** pergunta por quantos minutos (5 a 240; vazio = 60). Confere antes se os dois estão livres; se estiverem, manda ligar os dois **um logo após o outro** (eles iniciam ao mesmo tempo), espera os dois responderem e mostra na tela os endereços e a hora em que desligam sozinhos.
+- **Desligar:** desliga os dois antes do tempo.
+
+Se **algum já estiver em uso** (ligado antes, por outro fluxo ou pessoa, ou com a porta tomada por outro programa), o fluxo **avisa na tela qual está ocupado e não liga nem desliga nada**. Se algo falhar ao ligar, **desliga os dois**, mostra o motivo e termina com erro.
+
+Precisa da ponte no ar e do token dela no nó **Configuração**, como os outros fluxos. Os endereços mostrados (`127.0.0.1`) só abrem **neste computador**.
 
 ## O fluxo de arte (`noticias-2-arte`)
 

@@ -1,0 +1,980 @@
+{
+  "name": "Servidores · Ligar por um tempo (uso manual)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Ligar os servidores por um tempo\nPara quem só quer **mexer nas telas** do IA Clube, sem rodar nenhum fluxo de produção.\n\n**Ligar:** abra o formulário **Ligar** (botão *Execute workflow* aqui, ou o endereço de produção do formulário, com o fluxo ativo), escolha quantos minutos e envie. O fluxo liga **ao mesmo tempo** o gerador de imagens (porta 7000) e o gerenciador de carrosséis (porta 8000), confere se os dois responderam e mostra os endereços.\n\n**Desligam sozinhos** quando o tempo acaba. Para desligar antes, use o formulário **Desligar**.\n\n**Se algum estiver em uso** (ligado antes, por outro fluxo ou pessoa, ou com a porta ocupada por outro programa), o fluxo **avisa e não liga nem desliga nada**.\n\n**Antes de usar:** a *ponte* precisa estar rodando no computador (`scripts/ponte.py`; veja `PONTE_AUTOSTART.md`) e o token dela colado no nó **Configuração**.",
+        "height": 400,
+        "width": 560,
+        "color": 4
+      },
+      "id": "293e742c-75da-5d4a-ac83-463bbcf2d1d1",
+      "name": "Nota: como usar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Se algo der errado ao ligar\nO fluxo **desliga os dois servidores**, mostra o motivo na tela do formulário e termina com erro aqui.",
+        "height": 120,
+        "width": 520,
+        "color": 3
+      },
+      "id": "6e52a741-d5b1-5783-a07f-8c991231e477",
+      "name": "Nota: falha",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Ligar os servidores do IA Clube",
+        "formDescription": "Liga o gerador de imagens (porta 7000) e o gerenciador de carrosséis (porta 8000) por um tempo. Eles desligam sozinhos no fim. Se um deles já estiver em uso, nada é ligado.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Minutos ligados",
+              "fieldType": "number",
+              "placeholder": "60 (de 5 a 240)",
+              "requiredField": false
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {
+          "buttonLabel": "Ligar agora",
+          "appendAttribution": false
+        }
+      },
+      "id": "2c20c573-bf4a-5d06-b97f-ffbec2104575",
+      "name": "Formulário: ligar",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "96bcb848-888a-55a8-9ec4-ad39ec50630b"
+    },
+    {
+      "parameters": {
+        "formTitle": "Desligar os servidores do IA Clube",
+        "formDescription": "Desliga os servidores que este fluxo ligou. Use quando terminar antes do tempo.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Desligar agora",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Sim, desligar os dois servidores"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {
+          "buttonLabel": "Desligar",
+          "appendAttribution": false
+        }
+      },
+      "id": "fe0cffc1-8501-58b0-b5a7-fb2f8226ee3a",
+      "name": "Formulário: desligar",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        1000
+      ],
+      "webhookId": "cf045b88-7e51-5559-960c-1c21329e95b6"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token, portas e limites.\nconst entrada = $input.first().json;\nconst desligar = Object.prototype.hasOwnProperty.call(entrada, 'Desligar agora');\n\n// Tempo ligado, em minutos: o que a pessoa digitou, de 5 a 240. Vazio = 60.\nlet minutos = Number(entrada['Minutos ligados']);\nif (!Number.isFinite(minutos) || minutos <= 0) minutos = 60;\nminutos = Math.min(Math.max(Math.round(minutos), 5), 240);\n\nreturn [{ json: {\n  acao: desligar ? 'desligar' : 'ligar',\n  minutos,\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA',\n  porta_gerador: 7000,\n  porta_gerenciador: 8000,\n} }];"
+      },
+      "id": "902e8383-f70f-5a9e-8832-6d7b4e424f32",
+      "name": "Configuração",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ed561939-ac37-5f57-ab95-e5c046e65a23",
+              "leftValue": "={{ $json.acao === 'ligar' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "55cea5cc-1cf2-563b-b97a-afd7d78555e1",
+      "name": "Ligar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "6aceb727-d81e-518f-9955-9c1c23c80419",
+      "name": "Ver situação dos servidores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        -120
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst r = $input.first().json;\nconst nomes = { gerador: 'Gerador de imagens', gerenciador: 'Gerenciador de carrosséis' };\nconst portas = { gerador: cfg.porta_gerador, gerenciador: cfg.porta_gerenciador };\n\nif (r.erros || !Array.isArray(r.servidores)) {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || 'resposta inesperada da ponte';\n  return [{ json: { estado: 'erro', titulo: 'Não consegui verificar os servidores',\n    detalhes: ['A ponte recusou o pedido: ' + motivo + '. Confira o token no nó Configuração.'] } }];\n}\n\nconst ocupados = [];\nfor (const s of r.servidores) {\n  const quem = nomes[s.servidor] + ' (porta ' + portas[s.servidor] + ')';\n  if (s.rodando) {\n    ocupados.push(quem + ': já está ligado e em uso. Pode ser outra pessoa, ou um fluxo em andamento (como a geração de notícias).');\n  } else if (s.porta_ocupada) {\n    ocupados.push(quem + ': a porta está ocupada por outro programa do computador.');\n  }\n}\nif (ocupados.length) {\n  return [{ json: { estado: 'ocupado', titulo: 'Servidor ocupado: nada foi ligado nem desligado', detalhes: ocupados } }];\n}\nreturn [{ json: { estado: 'livre' } }];"
+      },
+      "id": "3274ad5c-5ff5-53e2-8319-d74aee7da6db",
+      "name": "Avaliar situação",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cc4ba278-234f-59d0-9061-dc174fd98067",
+              "leftValue": "={{ $json.estado === 'livre' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a06113e9-a2dc-5166-a347-f9afb75c8495",
+      "name": "Servidores livres?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconst linhas = [j.titulo, ''].concat((j.detalhes || []).map(d => '• ' + d));\nlinhas.push('', 'Tente de novo quando o outro uso terminar.');\nreturn [{ json: { mensagem: linhas.join('\\n') } }];"
+      },
+      "id": "7d92e092-9870-59ef-930c-dda565a2d8af",
+      "name": "Montar aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "options": {}
+      },
+      "id": "f0b18fb8-3da1-52a3-ba13-9f182447c5ee",
+      "name": "Responder: aviso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1700,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "13be4dd7-55ab-56e7-80bc-ec76979b907e",
+      "name": "Subir gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1460,
+        -220
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/subir",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "bcbea41b-f054-5e28-9cb0-69bf32dec2a6",
+      "name": "Subir gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        -220
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Os dois já foram mandados ligar, um logo depois do outro: eles iniciam ao mesmo tempo.\nconst g = $('Subir gerador').first().json;\nconst m = $input.first().json;\nconst problemas = [];\nif (g.ok !== true) problemas.push('gerador: ' + ((g.mensagem) || (g.erros && g.erros[0] && g.erros[0].mensagem) || 'a ponte não conseguiu ligar'));\nif (m.ok !== true) problemas.push('gerenciador: ' + ((m.mensagem) || (m.erros && m.erros[0] && m.erros[0].mensagem) || 'a ponte não conseguiu ligar'));\nif (problemas.length) throw new Error('Não consegui ligar: ' + problemas.join(' | '));\nreturn [{ json: { ok: true } }];"
+      },
+      "id": "1119685e-6abd-5e15-afbf-1111073a6b5a",
+      "name": "Conferir se subiram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1940,
+        -220
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/health",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "78336a50-ffd1-5c97-9202-41a6018fb1c8",
+      "name": "Conferir saúde do gerador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2180,
+        -220
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 24,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "b1036659-81a8-546e-ad6b-14d02fcb861f",
+      "name": "Conferir saúde do gerenciador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        -220
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 24,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const g = $('Conferir saúde do gerador').first().json;\nif (g.ready !== true) {\n  throw new Error('O gerador ligou, mas não está pronto: ' + ((g.problems || []).join(' | ') || 'sem detalhe'));\n}\nreturn [{ json: { ok: true } }];"
+      },
+      "id": "d97d2d7b-c720-57b7-852b-ce289681e563",
+      "name": "Avaliar prontidão",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        -220
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst fim = new Date(Date.now() + cfg.minutos * 60000);\nconst hora = fim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });\nconst linhas = [\n  'Servidores ligados por ' + cfg.minutos + ' minutos (desligam sozinhos às ' + hora + ').',\n  '',\n  'Gerador de imagens: http://127.0.0.1:' + cfg.porta_gerador,\n  'Gerenciador de carrosséis: http://127.0.0.1:' + cfg.porta_gerenciador,\n  '',\n  'Abra os endereços neste computador. Para desligar antes, use o formulário Desligar.',\n];\nreturn [{ json: { mensagem: linhas.join('\\n'), desliga_as: hora } }];"
+      },
+      "id": "c66d0248-5008-5cbd-b077-f4968fdae1b2",
+      "name": "Montar mensagem de sucesso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "options": {}
+      },
+      "id": "1542bc75-9f5f-5697-98af-c5fb84114989",
+      "name": "Responder: sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3140,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $('Configuração').first().json.minutos }}",
+        "unit": "minutes"
+      },
+      "id": "19c946d2-e785-530b-b1b4-236fdafbcc05",
+      "name": "Manter ligados",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3380,
+        -220
+      ],
+      "webhookId": "46cdae57-1a8e-5c13-a6fc-e60a295d5cb1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "2af5e6d0-3f51-50b8-8722-3b0d0f3c3576",
+      "name": "Desligar no fim do tempo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3620,
+        -220
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst desligou = r.ok === true;\nreturn [{ json: { ok: desligou, mensagem: desligou ? 'Tempo esgotado: servidores desligados.' : 'Tempo esgotado, mas não consegui confirmar o desligamento. Confira as portas 7000 e 8000.', resposta_da_ponte: r } }];"
+      },
+      "id": "e39df751-0992-50ae-898f-0fb98180586a",
+      "name": "Resumo final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3860,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nlet motivo;\nconst e = j.error;\nif (typeof e === 'string') motivo = e;\nelse if (e && (e.message || e.description)) motivo = (e.message || '') + (e.description ? ' — ' + e.description : '');\nelse if (j.mensagem) motivo = j.mensagem;\nelse motivo = 'falha sem detalhe: ' + JSON.stringify(j).slice(0, 400);\nreturn [{ json: { motivo } }];"
+      },
+      "id": "d4595c2a-b4cd-5bea-ae64-b825ea424af1",
+      "name": "Montar mensagem de falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "d3f9d953-d0f3-5290-baa2-855abadb1607",
+      "name": "Desligar tudo (falha)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2660,
+        760
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const motivo = $('Montar mensagem de falha').first().json.motivo;\nconst desligou = $input.first().json.ok === true;\nconst linhas = ['Não foi possível ligar os servidores.', '', 'Motivo: ' + motivo, '',\n  desligou ? 'Os dois servidores foram desligados.' : 'Não consegui confirmar o desligamento (a ponte pode estar fora do ar). Confira as portas 7000 e 8000.'];\nreturn [{ json: { mensagem: linhas.join('\\n') } }];"
+      },
+      "id": "ca5ddc0c-c182-506c-a352-2c900e2ecc27",
+      "name": "Texto da falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "options": {}
+      },
+      "id": "71f4cad5-5a9e-5494-9b3a-e80790c1b00d",
+      "name": "Responder: falha",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3140,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "={{ $('Texto da falha').first().json.mensagem }}"
+      },
+      "id": "1063872c-adf2-575d-a600-4f8cf7682928",
+      "name": "Falha no fluxo",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        3380,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "d6e049ef-af93-570d-9d87-3dc16ff765dc",
+      "name": "Desligar a pedido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        1000
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nlet linhas;\nif (r.ok === true && Array.isArray(r.servidores)) {\n  linhas = ['Pronto.', ''].concat(r.servidores.map(s => '• ' + s.servidor + ': ' + (s.parou ? 'desligado' : (s.mensagem || 'nada a desligar'))));\n  linhas.push('', 'Servidores que não foram ligados por este fluxo não são desligados por ele.');\n} else {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || (r.error && (r.error.message || r.error)) || 'a ponte não respondeu';\n  linhas = ['Não consegui desligar.', '', 'Motivo: ' + motivo, 'Confira as portas 7000 e 8000.'];\n}\nreturn [{ json: { mensagem: linhas.join('\\n') } }];"
+      },
+      "id": "e7798809-4608-5740-81da-18b985fe069f",
+      "name": "Texto do desligamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ formSubmittedText: $json.mensagem }) }}",
+        "options": {}
+      },
+      "id": "eeab0dc1-f597-5c42-b34e-de7364184f7f",
+      "name": "Responder: desligado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1220,
+        1000
+      ]
+    }
+  ],
+  "connections": {
+    "Formulário: ligar": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formulário: desligar": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Ligar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ligar?": {
+      "main": [
+        [
+          {
+            "node": "Ver situação dos servidores",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Desligar a pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ver situação dos servidores": {
+      "main": [
+        [
+          {
+            "node": "Avaliar situação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar situação": {
+      "main": [
+        [
+          {
+            "node": "Servidores livres?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Servidores livres?": {
+      "main": [
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar aviso": {
+      "main": [
+        [
+          {
+            "node": "Responder: aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerador": {
+      "main": [
+        [
+          {
+            "node": "Subir gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Conferir se subiram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conferir se subiram": {
+      "main": [
+        [
+          {
+            "node": "Conferir saúde do gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conferir saúde do gerador": {
+      "main": [
+        [
+          {
+            "node": "Conferir saúde do gerenciador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conferir saúde do gerenciador": {
+      "main": [
+        [
+          {
+            "node": "Avaliar prontidão",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar prontidão": {
+      "main": [
+        [
+          {
+            "node": "Montar mensagem de sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagem de sucesso": {
+      "main": [
+        [
+          {
+            "node": "Responder: sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder: sucesso": {
+      "main": [
+        [
+          {
+            "node": "Manter ligados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manter ligados": {
+      "main": [
+        [
+          {
+            "node": "Desligar no fim do tempo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Desligar no fim do tempo": {
+      "main": [
+        [
+          {
+            "node": "Resumo final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagem de falha": {
+      "main": [
+        [
+          {
+            "node": "Desligar tudo (falha)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Desligar tudo (falha)": {
+      "main": [
+        [
+          {
+            "node": "Texto da falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texto da falha": {
+      "main": [
+        [
+          {
+            "node": "Responder: falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder: falha": {
+      "main": [
+        [
+          {
+            "node": "Falha no fluxo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Desligar a pedido": {
+      "main": [
+        [
+          {
+            "node": "Texto do desligamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Texto do desligamento": {
+      "main": [
+        [
+          {
+            "node": "Responder: desligado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
