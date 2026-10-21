@@ -1,0 +1,131 @@
+% Convertido de ../dicionario/prompt-de-geracao-de-imagem.md
+
+\section{Prompt de geração de imagem: Dicionário}\label{sec:dicionario}
+
+Visão geral e a resposta curta: \hyperref[sec:visao-geral]{prompt-de-geracao-de-imagem.md}.
+
+O Dicionário (\nolinkurl{completo/dicionario-completo}) gera \textbf{2 imagens por post}, uma para cada card com imagem do conjunto \nolinkurl{dict-v1}. O prompt de cada uma é \texttt{cena, estilo}: a \textbf{cena} é escrita pela IA do texto e o \textbf{estilo} é um texto fixo do fluxo.
+
+\begin{recordbox}
+{\bfseries\color{accent} 1º (a analogia do dia a dia)}\par
+{\small\color{muted} Card}\quad \nolinkurl{texto-com-imagem-1}\par
+{\small\color{muted} Imagem}\quad sim\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 2º (como funciona por dentro)}\par
+{\small\color{muted} Card}\quad \nolinkurl{texto-com-imagem-2}\par
+{\small\color{muted} Imagem}\quad sim\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 3º e 4º}\par
+{\small\color{muted} Card}\quad \texttt{texto} e \nolinkurl{texto-com-inicio-fino}\par
+{\small\color{muted} Imagem}\quad não (só texto)\par
+\end{recordbox}
+
+
+Os outros cards (capa, definição, encerramento) também não têm imagem.
+
+\subsection*{O estilo fixo}
+
+\begin{sourcequote}
+flat vector editorial illustration, bold simple shapes, soft gradients, vivid red-orange and deep navy palette on a warm off-white background, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
+
+\end{sourcequote}
+
+\begin{itemize}
+\item 
+Fica em \href{run:../../../workflows/completo/dicionario-completo.workflow.json}{\nolinkurl{workflows/completo/dicionario-completo.workflow.json}}: nó \textbf{Configuração}, campo \nolinkurl{estilo_comum}.
+
+
+\item 
+Tamanho: 624 × 416 (\texttt{largura} e \texttt{altura}), cerca de 4 minutos por imagem.
+
+
+\item 
+Foi escrito por Claude em 20/10 a partir das cores do card do Dicionário (fundo \texttt{\#f2f2f1}, texto \texttt{\#0e1626}, acento \texttt{\#e63415}). É a versão "vermelho e azul-marinho" do estilo das Notícias (que usa azul e amarelo). Não vem do catálogo do gerador.
+
+
+\end{itemize}
+
+\subsection*{A cena, escrita pela IA}
+
+A IA que escreve o texto recebe, dentro do prompt dela, esta instrução (trecho exato do nó \textbf{AI Agent - Dicionario}):
+
+\begin{lstlisting}
+AS IMAGENS
+Os dois primeiros slides de desenvolvimento levam uma ilustracao, criada por um
+gerador de imagens local a partir do campo "prompt_imagem". Escreva esse campo assim:
+- em INGLES: o gerador de imagens entende ingles bem melhor
+- uma cena concreta e simples que mostre a ideia do slide por metafora visual:
+  objetos, lugar e clima (no 1o slide, a analogia do dia a dia; no 2o, o
+  funcionamento). Exemplo: "a small desk with only a few papers fitting on it,
+  an older paper sliding off the edge, calm studious mood"
+- sem texto, letras, numeros, logotipos nem nome de empresa, marca ou produto:
+  o gerador escreve mal e nao deve imitar marca
+- sem pessoas reais e sem rostos reconheciveis
+- nao descreva estilo de arte, cores nem enquadramento: a automacao acrescenta
+  sozinha o estilo visual da pagina, igual para todas as imagens
+- entre 60 e 300 caracteres, e uma cena diferente para cada imagem
+Os outros slides nao levam "prompt_imagem".
+\end{lstlisting}
+
+\begin{itemize}
+\item 
+\textbf{Modelo:} \texttt{OpenAI Chat Model} (gpt-5.4-pro, limite de 8000 tokens de saída). É o único modelo ligado nesse fluxo.
+
+
+\item 
+\textbf{Conferência:} o nó \textbf{Parse} avisa se um dos dois primeiros slides de desenvolvimento vier sem \nolinkurl{prompt_imagem} ou com mais de 300 caracteres. O aviso aparece no card do Trello.
+
+
+\item 
+\textbf{Se a IA não mandar a cena:} o nó \textbf{Montar entrada dos cards} usa \texttt{a simple friendly editorial illustration that explains the artificial intelligence concept: } + o termo.
+
+
+\item 
+\textbf{Nome do arquivo gerado:} \nolinkurl{dicionario-<termo>-1} e \nolinkurl{dicionario-<termo>-2}.
+
+
+\item 
+\textbf{Onde ver a cena escrita pela IA:} no card do Trello, na seção \texttt{\#\# PROMPTS DE IMAGEM}.
+
+
+\end{itemize}
+
+\subsection*{Execução real: Mixture of Experts (MoE), 20/10 às 14:32}
+
+Os dois prompts finais, como estão gravados nas imagens (\nolinkurl{20261020-143258-dicionario_mixture_of_experts_moe_1.png} e \nolinkurl{_2.png}). Em cada um, a \textbf{cena} é o que vem antes de \texttt{flat vector editorial illustration} e o resto é o estilo fixo.
+
+\begin{enumerate}
+\item 
+\begin{sourcequote}
+a hospital corridor with many treatment room doors, one sealed folder on a rolling cart rolling toward a single open room while the other rooms stay closed, clean organized atmosphere, flat vector editorial illustration, bold simple shapes, soft gradients, vivid red-orange and deep navy palette on a warm off-white background, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
+
+\end{sourcequote}
+
+
+\item 
+\begin{sourcequote}
+a machine room with many connected modules and wires, only a few modules glowing and sending signals into one shared output channel, the other modules dim and inactive, flat vector editorial illustration, bold simple shapes, soft gradients, vivid red-orange and deep navy palette on a warm off-white background, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
+
+\end{sourcequote}
+
+
+\end{enumerate}
+
+Parâmetros do motor nas duas: 8 passos, CFG 1,0, semente 42, 624 × 416.
+
+\subsection*{Onde mudar}
+
+\begin{recordbox}
+{\bfseries\color{accent} o estilo das imagens}\par
+{\small\color{muted} Onde}\quad \nolinkurl{estilo_comum} na \textbf{Configuração} do \nolinkurl{dicionario-completo}\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} como a IA escreve a cena}\par
+{\small\color{muted} Onde}\quad o trecho acima, no nó \textbf{AI Agent - Dicionario}\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} o tamanho}\par
+{\small\color{muted} Onde}\quad \texttt{largura} e \texttt{altura} na \textbf{Configuração} (múltiplos de 16)\par
+\end{recordbox}

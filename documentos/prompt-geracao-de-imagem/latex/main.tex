@@ -1,0 +1,76 @@
+% Compilar com XeLaTeX. Os quatro arquivos .tex preservam os textos Markdown de origem.
+\documentclass[11pt,a4paper]{article}
+\renewcommand{\contentsname}{Sumário}
+\usepackage{fontspec}
+\setmainfont{Liberation Sans}
+\setsansfont{Liberation Sans}
+\setmonofont[Scale=0.88]{DejaVu Sans Mono}
+\usepackage[a4paper,top=23mm,bottom=24mm,left=25mm,right=25mm]{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\setstretch{1.23}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.62em}
+\usepackage{xcolor}
+\definecolor{ink}{HTML}{1A2B3B}
+\definecolor{accent}{HTML}{136E80}
+\definecolor{muted}{HTML}{647482}
+\definecolor{soft}{HTML}{F3F7F8}
+\definecolor{rulecolor}{HTML}{DCE6E9}
+\color{ink}
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries\color{ink}}{}{0pt}{}
+\titleformat{\subsection}{\large\bfseries\color{accent}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{2.0em}{0.6em}
+\titlespacing*{\subsection}{0pt}{1.45em}{0.35em}
+\usepackage{enumitem}
+\setlist{leftmargin=1.6em,itemsep=0.3em,topsep=0.3em}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+\newtcolorbox{sourcequote}{breakable,enhanced,boxrule=0pt,frame hidden,
+  colback=soft,borderline west={2pt}{0pt}{accent},
+  left=12pt,right=10pt,top=8pt,bottom=8pt,before skip=0.65em,after skip=0.75em}
+\newtcolorbox{recordbox}{breakable,enhanced,colback=white,colframe=rulecolor,
+  boxrule=0.5pt,arc=2pt,left=10pt,right=10pt,top=8pt,bottom=7pt,
+  before skip=0.45em,after skip=0.45em}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\footnotesize,columns=fullflexible,breaklines=true,breakatwhitespace=false,
+  backgroundcolor=\color{soft},frame=single,rulecolor=\color{rulecolor},
+  framesep=8pt,xleftmargin=2pt,xrightmargin=2pt,aboveskip=0.75em,belowskip=0.75em}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=accent,urlcolor=accent,pdfauthor={IA Clube},
+  pdftitle={Prompts de geração de imagem}}
+\urlstyle{same}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted} IA Clube \quad/\quad Prompts de imagem}
+\fancyhead[R]{\small\color{muted}\nouppercase{\leftmark}}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{rulecolor}\leaders\hrule height \headrulewidth\hfill}}
+\setlength{\headheight}{22pt}
+\emergencystretch=2em
+
+\begin{document}
+\begin{center}
+  {\fontsize{24}{29}\selectfont\bfseries Prompts de geração de imagem\par}
+  \vspace{0.35em}
+  {\color{muted} Como os fluxos montam as imagens dos cards do IA Clube\par}
+  \vspace{0.45em}
+  {\small\color{muted} Documentação levantada em 21 de outubro de 2026\par}
+\end{center}
+\vspace{0.8em}
+\noindent\color{accent}\rule{\linewidth}{1.1pt}\color{ink}
+\vspace{0.3em}
+\tableofcontents
+\vspace{0.8em}
+
+\input{visao-geral.tex}
+\clearpage
+\input{dicionario.tex}
+\clearpage
+\input{hands-on.tex}
+\clearpage
+\input{noticias.tex}
+\end{document}

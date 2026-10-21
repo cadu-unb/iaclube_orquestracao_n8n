@@ -1,0 +1,214 @@
+% Convertido de ../prompt-de-geracao-de-imagem.md
+
+\section{Prompt de geração de imagem}\label{sec:visao-geral}
+
+De onde vêm os prompts que geram as imagens dos cards, e se eles usam os prompts declarados no \nolinkurl{iaclube_geracao_local}. Levantado em 21/10/2026, lendo o código dos fluxos e do gerador e os metadados das imagens que já foram geradas.
+
+Detalhes por conjunto de cards: \hyperref[sec:noticias]{Notícias} · \hyperref[sec:dicionario]{Dicionário} · \hyperref[sec:hands-on]{Hands on}.
+
+\subsection*{Resposta curta}
+
+\begin{enumerate}
+\item 
+\textbf{A seção de prompts existe no gerador, mas não declara o estilo do IA Clube.} O que há lá é um catálogo de 23 prompts de exemplo e de teste (cenas de passarinho, lobo-guará, paisagens…, em estilos variados) e uma página \textbf{Prompts} na interface. Nada ali descreve "como são as imagens do IA Clube".
+
+
+\item 
+\textbf{Nenhum fluxo usa esses prompts.} Os fluxos pedem ao gerador um \textbf{prompt livre} (\nolinkurl{/api/v1/jobs/free}), não um prompt do catálogo (\nolinkurl{/api/v1/jobs} com \nolinkurl{prompt_id}), e não usam etiquetas.
+
+
+\item 
+\textbf{O prompt de cada imagem é montado em dois pedaços, fora do gerador:} a \textbf{cena}, escrita pela IA que escreve o texto do post (ou à mão, no arquivo de exemplo das Notícias), e o \textbf{estilo}, um texto fixo (\nolinkurl{estilo_comum}) guardado no nó \textbf{Configuração} de cada fluxo. A junção é \texttt{cena, estilo}.
+
+
+\item 
+\textbf{O gerador local não acrescenta nada.} O texto chega ao \nolinkurl{sd-cli} exatamente como o fluxo montou: sem estilo extra, sem prompt negativo. Não há API de IA externa gerando a imagem; a IA externa só escreve a \textbf{cena}.
+
+
+\item 
+\textbf{O Hands on não gera imagens.} Os cards dele não têm espaço para imagem.
+
+
+\end{enumerate}
+
+\subsection*{1. O que o \nolinkurl{iaclube_geracao_local} tem de prompts}
+
+\begin{itemize}
+\item 
+\textbf{Catálogo:} \href{run:../../../../iaclube_geracao_local/catalogo/prompts/prompts.json}{\nolinkurl{catalogo/prompts/prompts.json}}, 23 prompts. Aparecem na página \textbf{Prompts} da interface e são pedidos pela API com \nolinkurl{prompt_id}. Cada um traz o texto e um tamanho sugerido.
+
+
+\item 
+\textbf{Etiquetas:} um recurso previsto para anexar a um pedido arquivos Markdown de instrução (por exemplo \nolinkurl{estilo/noticias.md}, que ficaria na "plataforma irmã"). Com \texttt{etiquetas} no pedido, o gerador junta esses arquivos à instrução. \textbf{Na prática está vazio:} \nolinkurl{catalogo/etiquetas/} só tem o README, não existe nenhuma etiqueta criada, nenhum arquivo \nolinkurl{estilo/*.md} existe em nenhum dos repositórios, e a API de arquivos da plataforma irmã ainda não existe (é o que o próprio código diz).
+
+
+\end{itemize}
+
+\begin{recordbox}
+{\bfseries\color{accent} Estilo}\par
+{\small\color{muted} Qtde}\quad 8\par
+{\small\color{muted} O que são}\quad a mesma cena em técnicas diferentes: risografia, fotográfico, cartoon, surreal (passarinho), aquarela, pixel art, argila 3D, nanquim\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} Finalidade}\par
+{\small\color{muted} Qtde}\quad 4\par
+{\small\color{muted} O que são}\quad capa de apresentação, avatar, ilustração para artigo, cartaz vertical\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} Assunto}\par
+{\small\color{muted} Qtde}\quad 8\par
+{\small\color{muted} O que são}\quad paisagens, cidade na chuva, natureza-morta, gato, lobo-guará em quatro técnicas\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} Teste rápido}\par
+{\small\color{muted} Qtde}\quad 3\par
+{\small\color{muted} O que são}\quad imagens de 16, 32 e 64 px, para testar o fluxo em segundos\par
+\end{recordbox}
+
+
+O catálogo \textbf{já foi usado}, mas direto no gerador: as 5 imagens \nolinkurl{lobo_guara_*} de 18/10 (13:07) têm exatamente o texto dos prompts \nolinkurl{lobo_guara_*} do catálogo. Não passou por nenhum fluxo.
+
+A categoria \textbf{Estilo} é uma \textbf{vitrine de técnicas}, não o estilo da marca. O próprio documento de planejamento diz que as cores do cartoon "são apenas inspiração temática" e que não há paleta obrigatória para a imagem. Três prompts têm vocabulário parecido com o que os fluxos usam (\nolinkurl{ilustracao_artigo}: "flat vector style, limited warm palette"; \nolinkurl{capa_apresentacao}: "soft gradient of deep blue and warm yellow"; \nolinkurl{avatar_perfil}: "flat vector illustration"), mas isso é só parecença: nenhum fluxo lê o catálogo.
+
+\subsection*{2. De onde vem o prompt que gera as imagens hoje}
+
+\begin{lstlisting}
+ CENA (inglês)                           ESTILO FIXO (inglês)
+ campo prompt_imagem, escrito pela IA    texto estilo_comum, no nó Configuração
+ do post (ou à mão, no arquivo de        de cada fluxo
+ exemplo das Notícias)
+            \                                  /
+             "cena, estilo"   (nó "Montar pedidos de imagem")
+                            |
+          POST /api/v1/jobs/free  { prompt, width, height, nome_arquivo }
+                            |            (pela ponte, scripts/ponte.py)
+          gerador local: sd-cli --prompt "<exatamente esse texto>"
+\end{lstlisting}
+
+\begin{itemize}
+\item 
+O nó \textbf{Montar pedidos de imagem} faz \texttt{prompt = cena + ", " + estilo\_comum}. O código é \textbf{o mesmo} nos três fluxos de arte (\nolinkurl{noticias-2-arte}, \nolinkurl{noticias-completo}, \nolinkurl{dicionario-completo}).
+
+
+\item 
+O pedido vai por \nolinkurl{/jobs/free} (prompt livre). Ele traz só \texttt{prompt}, \texttt{width}, \texttt{height} (624 × 416) e \nolinkurl{nome_arquivo}. \textbf{Não leva \nolinkurl{prompt_id} nem \texttt{etiquetas}.}
+
+
+\item 
+Sem etiquetas, o gerador devolve "o próprio prompt" e nem consulta a plataforma irmã (está no código: \texttt{CompositorInstrucoes.compor}).
+
+
+\item 
+O comando do motor leva o texto em \nolinkurl{--prompt} e, fora ele, só opções técnicas (tamanho, 8 passos, CFG 1,0, threads, modelos). Não há prompt negativo nem sufixo de estilo.
+
+
+\end{itemize}
+
+\subsection*{3. O que cada fluxo usa}
+
+\begin{recordbox}
+{\bfseries\color{accent} Notícias}\par
+{\small\color{muted} Fluxo}\quad \nolinkurl{completo/noticias-completo}\par
+{\small\color{muted} Quem escreve a \textbf{cena}}\quad a IA do texto (Claude Sonnet 4.6), campo \nolinkurl{prompt_imagem}\par
+{\small\color{muted} \textbf{Estilo} fixo}\quad azul e amarelo\par
+{\small\color{muted} Imagens}\quad 1 por notícia (4 a 6)\par
+{\small\color{muted} Já gerou imagens?}\quad \textbf{não}: nunca foi rodado\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} Notícias}\par
+{\small\color{muted} Fluxo}\quad \nolinkurl{noticias-2-arte}\par
+{\small\color{muted} Quem escreve a \textbf{cena}}\quad \textbf{à mão}, em \nolinkurl{entradas/exemplo-noticias-10.json} (os 10 atuais foram escritos por Claude em 18/10)\par
+{\small\color{muted} \textbf{Estilo} fixo}\quad o mesmo azul e amarelo, no próprio arquivo\par
+{\small\color{muted} Imagens}\quad 10\par
+{\small\color{muted} Já gerou imagens?}\quad \textbf{sim}: 5 execuções com esses prompts (19/10 e 20/10)\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} Dicionário}\par
+{\small\color{muted} Fluxo}\quad \nolinkurl{completo/dicionario-completo}\par
+{\small\color{muted} Quem escreve a \textbf{cena}}\quad a IA do texto (GPT-5.4-pro), campo \nolinkurl{prompt_imagem}\par
+{\small\color{muted} \textbf{Estilo} fixo}\quad vermelho-alaranjado e azul-marinho\par
+{\small\color{muted} Imagens}\quad 2\par
+{\small\color{muted} Já gerou imagens?}\quad \textbf{sim}, 20/10 às 14:32 (Mixture of Experts)\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} Hands on}\par
+{\small\color{muted} Fluxo}\quad \nolinkurl{completo/hands_on-completo}\par
+{\small\color{muted} Quem escreve a \textbf{cena}}\quad (não gera imagens)\par
+{\small\color{muted} \textbf{Estilo} fixo}\quad (não há)\par
+{\small\color{muted} Imagens}\quad 0\par
+{\small\color{muted} Já gerou imagens?}\quad não se aplica\par
+\end{recordbox}
+
+
+Ou seja: \textbf{todas as imagens de Notícias geradas até hoje têm os prompts escritos à mão do arquivo de exemplo}, e não prompts da IA. A única geração com prompt escrito pela IA foi a do Dicionário. (Pelos metadados dá para saber \emph{qual prompt} gerou cada imagem, não \emph{por qual caminho} ele foi pedido; os textos e os nomes batem com o \nolinkurl{noticias-2-arte}.)
+
+\subsection*{4. Prova: o prompt que está gravado na imagem}
+
+O gerador grava o prompt e os parâmetros dentro de cada PNG (campo \texttt{parameters}). Na imagem do Dicionário gerada em 20/10 às 14:32:
+
+\begin{lstlisting}
+a machine room with many connected modules and wires, only a few modules glowing and sending signals into one shared output channel, the other modules dim and inactive, flat vector editorial illustration, bold simple shapes, soft gradients, vivid red-orange and deep navy palette on a warm off-white background, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
+Steps: 8, CFG scale: 1.0, Guidance: 3.5, Seed: 42, Size: 624x416, Unet: z_image_turbo-Q4_K.gguf, TE: Qwen3-4B-Instruct-2507-Q4_K_M.gguf, VAE: ae.safetensors, stable-diffusion.cpp
+\end{lstlisting}
+
+A primeira parte (até \texttt{inactive,}) é a \textbf{cena} que a IA escreveu; o resto é o \nolinkurl{estilo_comum} do fluxo, palavra por palavra. Nas imagens de Notícias é igual: a cena do arquivo de exemplo, seguida do estilo azul e amarelo. Em todas as imagens inspecionadas a semente foi \textbf{42} (o gerador não envia \nolinkurl{--seed}; é o padrão do motor).
+
+\subsection*{5. Os prompts declarados estão sendo usados?}
+
+\textbf{Não.} Consequências práticas:
+
+\begin{itemize}
+\item 
+Mudar o catálogo de prompts do gerador \textbf{não muda} nenhuma imagem dos fluxos.
+
+
+\item 
+O estilo está \textbf{copiado em três lugares}: \texttt{Configuração} do \nolinkurl{noticias-completo}, \texttt{Configuração} do \nolinkurl{dicionario-completo} e \nolinkurl{estilo_comum} do \nolinkurl{entradas/exemplo-noticias-10.json}. Mudar o visual das Notícias exige mudar dois deles.
+
+
+\item 
+O texto do estilo foi escrito por Claude (o das Notícias em 18/10, o do Dicionário em 20/10, este a partir das cores do card: fundo \texttt{\#f2f2f1}, texto \texttt{\#0e1626}, acento \texttt{\#e63415}). Não saiu do catálogo nem de uma regra aprovada por você.
+
+
+\end{itemize}
+
+Caminhos possíveis, se você quiser que o estilo passe a ser declarado num lugar só (nada disso foi feito):
+
+\begin{enumerate}
+\item 
+\textbf{Manter no fluxo e documentar} (o mais simples): o \nolinkurl{estilo_comum} de cada Configuração vira o estilo oficial, e este documento é o registro.
+
+
+\item 
+\textbf{Catálogo do gerador:} criar entradas de estilo lá. Não serve direto: cada entrada do catálogo é um prompt \textbf{completo} (cena incluída), não um estilo para somar à cena de cada notícia.
+
+
+\item 
+\textbf{Etiquetas} (\nolinkurl{estilo/noticias.md}): é o desenho original para declarar estilo, mas depende da plataforma irmã servir os arquivos (a API não existe; há um simulador para testes) e de os fluxos mandarem \texttt{etiquetas} no pedido.
+
+
+\end{enumerate}
+
+\subsection*{6. Como conferir o prompt de uma imagem}
+
+\begin{itemize}
+\item 
+\textbf{No n8n:} a saída do nó \textbf{Montar pedidos de imagem} mostra, em \texttt{corpo.prompt}, o texto exato enviado ao gerador.
+
+
+\item 
+\textbf{Na imagem pronta:} o prompt e os parâmetros estão gravados no PNG.
+
+
+\end{itemize}
+
+\begin{lstlisting}
+strings -n 80 ~/Imagens/geracao_local/2026-10-20/20261020-143258-dicionario_mixture_of_experts_moe_2.png | head -2
+\end{lstlisting}
+
+\begin{itemize}
+\item 
+\textbf{Na API do gerador:} \texttt{GET /api/v1/jobs/TICKET} devolve o texto final do pedido (\nolinkurl{instrucao_final}).
+
+
+\end{itemize}

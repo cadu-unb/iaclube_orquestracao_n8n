@@ -1,0 +1,174 @@
+% Convertido de ../noticias/prompt-de-geracao-de-imagem.md
+
+\section{Prompt de geração de imagem: Notícias}\label{sec:noticias}
+
+Visão geral e a resposta curta: \hyperref[sec:visao-geral]{prompt-de-geracao-de-imagem.md}.
+
+Hoje há \textbf{dois caminhos} para as imagens das Notícias. Eles montam o prompt do mesmo jeito (\texttt{cena, estilo}); muda quem escreve a \textbf{cena}.
+
+\begin{recordbox}
+{\bfseries\color{accent} \nolinkurl{noticias-2-arte}}\par
+{\small\color{muted} Quem escreve a cena}\quad uma pessoa, no arquivo \href{run:../../../entradas/exemplo-noticias-10.json}{\nolinkurl{entradas/exemplo-noticias-10.json}}\par
+{\small\color{muted} De onde vem o estilo}\quad \nolinkurl{estilo_comum} do mesmo arquivo\par
+{\small\color{muted} Imagens}\quad 10 (uma por notícia do arquivo)\par
+{\small\color{muted} Já gerou imagens?}\quad \textbf{sim}, com os prompts do arquivo: 19/10 (12:57, 13:48, 17:21) e 20/10 (11:48), 10 imagens cada, e 20/10 às 13:54 (2 imagens)\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} \nolinkurl{completo/noticias-completo}}\par
+{\small\color{muted} Quem escreve a cena}\quad a IA que escreve o texto (Claude Sonnet 4.6), no campo \nolinkurl{prompt_imagem} de cada notícia\par
+{\small\color{muted} De onde vem o estilo}\quad \nolinkurl{estilo_comum} do nó \textbf{Configuração}\par
+{\small\color{muted} Imagens}\quad uma por notícia escolhida (4 a 6)\par
+{\small\color{muted} Já gerou imagens?}\quad \textbf{não}: não há nenhuma imagem com prompt escrito pela IA das Notícias\par
+\end{recordbox}
+
+
+\subsection*{O estilo fixo}
+
+O mesmo texto, em dois lugares (se mudar um, mude o outro):
+
+\begin{sourcequote}
+flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
+
+\end{sourcequote}
+
+\begin{itemize}
+\item 
+Em \href{run:../../../workflows/completo/noticias-completo.workflow.json}{\nolinkurl{workflows/completo/noticias-completo.workflow.json}}: nó \textbf{Configuração}, campo \nolinkurl{estilo_comum}.
+
+
+\item 
+Em \href{run:../../../entradas/exemplo-noticias-10.json}{\nolinkurl{entradas/exemplo-noticias-10.json}}: campo \nolinkurl{estilo_comum}.
+
+
+\item 
+Tamanho: 624 × 416 (nó \textbf{Configuração}: \texttt{largura} e \texttt{altura}).
+
+
+\end{itemize}
+
+Foi escrito por Claude em 18/10, junto com o arquivo de exemplo. Não vem do catálogo do gerador nem de uma regra aprovada.
+
+\subsection*{Caminho 1: \nolinkurl{noticias-2-arte} (prompts escritos à mão)}
+
+O arquivo de exemplo tem 10 cenas. Cada uma vira \texttt{cena, estilo} e é pedida ao gerador:
+
+\begin{recordbox}
+{\bfseries\color{accent} 2}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-01-dna}\par
+{\small\color{muted} Cena (prompt)}\quad a glowing double helix of DNA surrounded by floating data panels and a soft scanning beam, scientific discovery mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 3}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-02-agentes-wiki}\par
+{\small\color{muted} Cena (prompt)}\quad small friendly robot agents wandering out of a fenced garden onto a web of connected pages, a hint of mischief, sense of lost control\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 4}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-03-investigacao}\par
+{\small\color{muted} Cena (prompt)}\quad a detective magnifying glass over a tangled circuit board with a question mark shaped cable, investigative mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 5}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-04-mistral}\par
+{\small\color{muted} Cena (prompt)}\quad a stack of gold coins forming a rising tower beside a stylized European map outline made of circuit lines, investment and sovereignty mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 6}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-05-premiere}\par
+{\small\color{muted} Cena (prompt)}\quad a video editing timeline with film strips and a sparkling magic wand adding new frames, creative workflow mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 7}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-06-jornais}\par
+{\small\color{muted} Cena (prompt)}\quad stacked newspapers facing a large balance scale against a glowing server rack, legal dispute mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 8}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-07-ia-celular}\par
+{\small\color{muted} Cena (prompt)}\quad a smartphone with a small glowing brain chip inside a protective shield, privacy and speed mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 9}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-08-agentes-trabalho}\par
+{\small\color{muted} Cena (prompt)}\quad a tidy desk with an inbox, a calendar and a helpful robot arm sorting tasks automatically, productive calm mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 10}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-09-voz}\par
+{\small\color{muted} Cena (prompt)}\quad a sound wave turning into a smooth human silhouette speaking, microphone in front, warm natural voice mood\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} 11}\par
+{\small\color{muted} Arquivo}\quad \nolinkurl{noticia-10-energia}\par
+{\small\color{muted} Cena (prompt)}\quad a data center building connected by power lines to a wind turbine and a solar panel, energy demand mood\par
+\end{recordbox}
+
+
+Estes são os prompts de \textbf{todas} as imagens de Notícias geradas até agora (o texto gravado em cada PNG bate com esta tabela). Exemplo de prompt final, gravado na imagem \nolinkurl{noticia_07_ia_celular} (19/10 às 17:21):
+
+\begin{sourcequote}
+a smartphone with a small glowing brain chip inside a protective shield, privacy and speed mood, flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
+
+\end{sourcequote}
+
+\subsection*{Caminho 2: \nolinkurl{noticias-completo} (cena escrita pela IA)}
+
+A IA que escreve o texto recebe, dentro do prompt dela, esta instrução sobre a imagem (trecho exato do nó \textbf{AI Agent - Noticias}):
+
+\begin{lstlisting}
+A IMAGEM DE CADA NOTICIA
+Cada card de noticia leva uma ilustracao, criada por um gerador de imagens local
+a partir do campo "prompt_imagem". Escreva esse campo assim:
+- em INGLES: o gerador de imagens entende ingles bem melhor
+- uma cena concreta e simples que represente a noticia por metafora visual:
+  objetos, lugar e clima. Exemplo: "a smartphone with a small glowing chip
+  inside a protective shield, privacy and speed mood"
+- sem texto, letras, numeros, logotipos nem nome de empresa, marca ou produto:
+  o gerador escreve mal e nao deve imitar marca
+- sem pessoas reais e sem rostos reconheciveis
+- nao descreva estilo de arte, cores nem enquadramento: a automacao acrescenta
+  sozinha o estilo visual da pagina, igual para todas as imagens
+- uma cena diferente para cada noticia
+\end{lstlisting}
+
+\begin{itemize}
+\item 
+\textbf{Modelo:} \texttt{Anthropic Chat Model} (claude-sonnet-4-6). O nó \texttt{OpenAI Chat Model} (gpt-5.4-pro) está no fluxo, mas \textbf{desligado}.
+
+
+\item 
+\textbf{Conferência:} o nó \textbf{Parse} avisa se faltar \nolinkurl{prompt_imagem} ou se passar de 300 caracteres. O aviso aparece no card do Trello.
+
+
+\item 
+\textbf{Se a IA não mandar a cena:} o nó \textbf{Montar entrada dos cards} usa \texttt{an editorial illustration about artificial intelligence news, } + o rótulo (ou a manchete) da notícia.
+
+
+\item 
+\textbf{Nome do arquivo gerado:} \nolinkurl{noticia-NN-<rotulo>}.
+
+
+\item 
+\textbf{Onde ver a cena escrita pela IA:} no card do Trello, na seção \texttt{\#\# PROMPTS DE IMAGEM}.
+
+
+\end{itemize}
+
+\subsection*{Onde mudar}
+
+\begin{recordbox}
+{\bfseries\color{accent} o estilo das imagens}\par
+{\small\color{muted} Onde}\quad \nolinkurl{estilo_comum} na \textbf{Configuração} do \nolinkurl{noticias-completo} \textbf{e} em \nolinkurl{entradas/*.json}\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} como a IA escreve a cena}\par
+{\small\color{muted} Onde}\quad o trecho acima, no nó \textbf{AI Agent - Noticias} do \nolinkurl{noticias-completo}\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} uma cena específica (caminho 1)}\par
+{\small\color{muted} Onde}\quad o campo \texttt{prompt} do item em \texttt{imagens[]} do arquivo de entrada\par
+\end{recordbox}
+\begin{recordbox}
+{\bfseries\color{accent} o tamanho}\par
+{\small\color{muted} Onde}\quad \texttt{largura} e \texttt{altura} na \textbf{Configuração} (múltiplos de 16)\par
+\end{recordbox}

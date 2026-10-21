@@ -1,0 +1,59 @@
+% Convertido de ../hands-on/prompt-de-geracao-de-imagem.md
+
+\section{Prompt de geração de imagem: Hands on}\label{sec:hands-on}
+
+Visão geral e a resposta curta: \hyperref[sec:visao-geral]{prompt-de-geracao-de-imagem.md}.
+
+\textbf{O Hands on não gera imagens.} Não existe prompt de imagem nesse conjunto, nem para o gerador local nem para uma IA externa.
+
+\subsection*{Por quê}
+
+Os cards do conjunto \nolinkurl{hands-on} são só texto: \texttt{capa}, \nolinkurl{texto-titulo-grande}, \nolinkurl{passo-a-passo}, \nolinkurl{texto-titulo-compacto} e \texttt{encerramento}. Nenhum deles tem espaço para imagem (o catálogo do gerenciador não lista nenhuma máscara \nolinkurl{imagem_*} neles).
+
+O que existe é um modelo \textbf{emprestado} das Notícias, \nolinkurl{texto-com-imagem} (aprovado em 12/10 no \nolinkurl{iaclube_n8n}), que poderia ser usado num carrossel Hands on. O fluxo \nolinkurl{completo/hands_on-completo} \textbf{não o usa}.
+
+\subsection*{O que isso significa no fluxo}
+
+\href{run:../../../workflows/completo/hands_on-completo.workflow.json}{\nolinkurl{workflows/completo/hands_on-completo.workflow.json}}:
+
+\begin{itemize}
+\item 
+não tem os nós do gerador de imagens (sobe só o gerenciador de carrosséis, produz os cards e o desliga);
+
+
+\item 
+o prompt da IA do texto \textbf{não} pede \nolinkurl{prompt_imagem};
+
+
+\item 
+não há \nolinkurl{estilo_comum} na \textbf{Configuração}, nem tamanho de imagem.
+
+
+\end{itemize}
+
+\subsection*{Não confundir com o "prompt pronto" do post}
+
+Os posts de Hands on trazem um \textbf{prompt de texto} para os leitores copiarem (o campo \nolinkurl{prompt_exemplo}, que vai na legenda e na seção \texttt{\#\# PROMPT PRONTO} do card do Trello). Ele ensina a usar uma ferramenta de IA e \textbf{não tem relação} com geração de imagem.
+
+\subsection*{Se um dia o Hands on tiver imagens}
+
+Nada disso foi feito. O caminho seria:
+
+\begin{enumerate}
+\item 
+escolher quais cards ganham imagem (usando o modelo emprestado \nolinkurl{texto-com-imagem});
+
+
+\item 
+pedir \nolinkurl{prompt_imagem} à IA, como no Dicionário (veja \hyperref[sec:dicionario]{dicionario/});
+
+
+\item 
+copiar para o fluxo os nós do gerador de imagens do \nolinkurl{dicionario-completo};
+
+
+\item 
+definir um \nolinkurl{estilo_comum} do Hands on (a cor de acento do conjunto é o amarelo \texttt{\#fbbb20}).
+
+
+\end{enumerate}
