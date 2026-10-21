@@ -38,10 +38,10 @@ Todos usam a mesma **ponte**: rode um fluxo de cada vez. O que cada um faz, a or
 
 Para quem não quer rodar um fluxo de produção, só abrir o gerador de imagens (porta 7000) e o gerenciador de carrosséis (porta 8000) no navegador. Duas entradas, ambas formulários do n8n:
 
-- **Ligar:** pergunta por quantos minutos (5 a 240; vazio = 60). Confere antes se os dois estão livres; se estiverem, manda ligar os dois **um logo após o outro** (eles iniciam ao mesmo tempo), espera os dois responderem e mostra na tela os endereços e a hora em que desligam sozinhos.
-- **Desligar:** desliga os dois antes do tempo.
+- **Ligar:** pergunta **quais servidores** (os dois, só o gerador ou só o gerenciador) e por quantos minutos (5 a 240; vazio = 60). Confere antes se os escolhidos estão livres; se estiverem, manda ligar todos **um logo após o outro** (eles iniciam ao mesmo tempo), espera responderem e mostra na tela os endereços e a hora em que desligam sozinhos.
+- **Desligar:** pergunta quais desligar (os dois, ou só um) e desliga antes do tempo.
 
-Se **algum já estiver em uso** (ligado antes, por outro fluxo ou pessoa, ou com a porta tomada por outro programa), o fluxo **avisa na tela qual está ocupado e não liga nem desliga nada**. Se algo falhar ao ligar, **desliga os dois**, mostra o motivo e termina com erro.
+Se **algum dos escolhidos já estiver em uso** (ligado antes, por outro fluxo ou pessoa, ou com a porta tomada por outro programa), o fluxo **avisa na tela qual está ocupado e não liga nem desliga nada**. O que não foi escolhido nunca é tocado: por exemplo, ligar só o gerenciador funciona mesmo com o gerador em uso. Se algo falhar ao ligar, **desliga os escolhidos**, mostra o motivo e termina com erro.
 
 Precisa da ponte no ar e do token dela no nó **Configuração**, como os outros fluxos. Os endereços mostrados (`127.0.0.1`) só abrem **neste computador**.
 

@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Ligar os servidores por um tempo\nPara quem só quer **mexer nas telas** do IA Clube, sem rodar nenhum fluxo de produção.\n\n**Ligar:** abra o formulário **Ligar** (botão *Execute workflow* aqui, ou o endereço de produção do formulário, com o fluxo ativo), escolha quantos minutos e envie. O fluxo liga **ao mesmo tempo** o gerador de imagens (porta 7000) e o gerenciador de carrosséis (porta 8000), confere se os dois responderam e mostra os endereços.\n\n**Desligam sozinhos** quando o tempo acaba. Para desligar antes, use o formulário **Desligar**.\n\n**Se algum estiver em uso** (ligado antes, por outro fluxo ou pessoa, ou com a porta ocupada por outro programa), o fluxo **avisa e não liga nem desliga nada**.\n\n**Antes de usar:** a *ponte* precisa estar rodando no computador (`scripts/ponte.py`; veja `PONTE_AUTOSTART.md`) e o token dela colado no nó **Configuração**.",
+        "content": "## Ligar os servidores por um tempo\nPara quem só quer **mexer nas telas** do IA Clube, sem rodar nenhum fluxo de produção.\n\n**Ligar:** abra o formulário **Ligar** (botão *Execute workflow* aqui, ou o endereço de produção do formulário, com o fluxo ativo), escolha quantos minutos e envie. Escolha também **quais servidores** ligar: os dois (padrão), só o gerador de imagens (porta 7000) ou só o gerenciador de carrosséis (porta 8000). Eles sobem ao mesmo tempo, o fluxo confere se responderam e mostra os endereços.\n\n**Desligam sozinhos** quando o tempo acaba. Para desligar antes, use o formulário **Desligar** (também com a escolha de quais).\n\n**Se algum dos escolhidos estiver em uso** (ligado antes, por outro fluxo ou pessoa, ou com a porta ocupada por outro programa), o fluxo **avisa e não liga nem desliga nada**. Servidores que você não escolheu nunca são tocados.\n\n**Antes de usar:** a *ponte* precisa estar rodando no computador (`scripts/ponte.py`; veja `PONTE_AUTOSTART.md`) e o token dela colado no nó **Configuração**.",
         "height": 400,
         "width": 560,
         "color": 4
@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "content": "### Se algo der errado ao ligar\nO fluxo **desliga os dois servidores**, mostra o motivo na tela do formulário e termina com erro aqui.",
+        "content": "### Se algo der errado ao ligar\nO fluxo **desliga os servidores escolhidos**, mostra o motivo na tela do formulário e termina com erro aqui.",
         "height": 120,
         "width": 520,
         "color": 3
@@ -36,9 +36,27 @@
     {
       "parameters": {
         "formTitle": "Ligar os servidores do IA Clube",
-        "formDescription": "Liga o gerador de imagens (porta 7000) e o gerenciador de carrosséis (porta 8000) por um tempo. Eles desligam sozinhos no fim. Se um deles já estiver em uso, nada é ligado.",
+        "formDescription": "Escolha quais servidores ligar (gerador de imagens na porta 7000, gerenciador de carrosséis na porta 8000) e por quanto tempo. Eles desligam sozinhos no fim. Se um dos escolhidos já estiver em uso, nada é ligado.",
         "formFields": {
           "values": [
+            {
+              "fieldLabel": "Quais servidores ligar",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Os dois (gerador e gerenciador)"
+                  },
+                  {
+                    "option": "Só o gerador de imagens (porta 7000)"
+                  },
+                  {
+                    "option": "Só o gerenciador de carrosséis (porta 8000)"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
             {
               "fieldLabel": "Minutos ligados",
               "fieldType": "number",
@@ -69,12 +87,18 @@
         "formFields": {
           "values": [
             {
-              "fieldLabel": "Desligar agora",
-              "fieldType": "checkbox",
+              "fieldLabel": "Quais servidores desligar",
+              "fieldType": "dropdown",
               "fieldOptions": {
                 "values": [
                   {
-                    "option": "Sim, desligar os dois servidores"
+                    "option": "Os dois (gerador e gerenciador)"
+                  },
+                  {
+                    "option": "Só o gerador de imagens (porta 7000)"
+                  },
+                  {
+                    "option": "Só o gerenciador de carrosséis (porta 8000)"
                   }
                 ]
               },
@@ -99,7 +123,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token, portas e limites.\nconst entrada = $input.first().json;\nconst desligar = Object.prototype.hasOwnProperty.call(entrada, 'Desligar agora');\n\n// Tempo ligado, em minutos: o que a pessoa digitou, de 5 a 240. Vazio = 60.\nlet minutos = Number(entrada['Minutos ligados']);\nif (!Number.isFinite(minutos) || minutos <= 0) minutos = 60;\nminutos = Math.min(Math.max(Math.round(minutos), 5), 240);\n\nreturn [{ json: {\n  acao: desligar ? 'desligar' : 'ligar',\n  minutos,\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'qFPgEFVBoIrIG2aHrN02aMR2YprNczxM',\n  porta_gerador: 7000,\n  porta_gerenciador: 8000,\n} }];"
+        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token, portas e limites.\nconst entrada = $input.first().json;\nconst desligar = Object.prototype.hasOwnProperty.call(entrada, 'Quais servidores desligar');\n\n// Quais servidores: o texto escolhido no formulário (\"Só o gerador...\", \"Só o gerenciador...\", senão os dois).\nconst escolha = String(entrada['Quais servidores ligar'] || entrada['Quais servidores desligar'] || '');\nlet servidores = ['gerador', 'gerenciador'];\nif (/^Só o gerador/i.test(escolha)) servidores = ['gerador'];\nelse if (/^Só o gerenciador/i.test(escolha)) servidores = ['gerenciador'];\n\n// Tempo ligado, em minutos: o que a pessoa digitou, de 5 a 240. Vazio = 60.\nlet minutos = Number(entrada['Minutos ligados']);\nif (!Number.isFinite(minutos) || minutos <= 0) minutos = 60;\nminutos = Math.min(Math.max(Math.round(minutos), 5), 240);\n\nreturn [{ json: {\n  acao: desligar ? 'desligar' : 'ligar',\n  minutos,\n  servidores,\n  alvo: servidores.length === 2 ? 'todos' : servidores[0],  // o que a ponte recebe em /servidores/<alvo>/parar\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA',\n  porta_gerador: 7000,\n  porta_gerenciador: 8000,\n} }];"
       },
       "id": "902e8383-f70f-5a9e-8832-6d7b4e424f32",
       "name": "Configuração",
@@ -177,7 +201,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Configuração').first().json;\nconst r = $input.first().json;\nconst nomes = { gerador: 'Gerador de imagens', gerenciador: 'Gerenciador de carrosséis' };\nconst portas = { gerador: cfg.porta_gerador, gerenciador: cfg.porta_gerenciador };\n\nif (r.erros || !Array.isArray(r.servidores)) {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || 'resposta inesperada da ponte';\n  return [{ json: { estado: 'erro', titulo: 'Não consegui verificar os servidores',\n    detalhes: ['A ponte recusou o pedido: ' + motivo + '. Confira o token no nó Configuração.'] } }];\n}\n\nconst ocupados = [];\nfor (const s of r.servidores) {\n  const quem = nomes[s.servidor] + ' (porta ' + portas[s.servidor] + ')';\n  if (s.rodando) {\n    ocupados.push(quem + ': já está ligado e em uso. Pode ser outra pessoa, ou um fluxo em andamento (como a geração de notícias).');\n  } else if (s.porta_ocupada) {\n    ocupados.push(quem + ': a porta está ocupada por outro programa do computador.');\n  }\n}\nif (ocupados.length) {\n  return [{ json: { estado: 'ocupado', titulo: 'Servidor ocupado: nada foi ligado nem desligado', detalhes: ocupados } }];\n}\nreturn [{ json: { estado: 'livre' } }];"
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst r = $input.first().json;\nconst nomes = { gerador: 'Gerador de imagens', gerenciador: 'Gerenciador de carrosséis' };\nconst portas = { gerador: cfg.porta_gerador, gerenciador: cfg.porta_gerenciador };\n\nif (r.erros || !Array.isArray(r.servidores)) {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || 'resposta inesperada da ponte';\n  return [{ json: { estado: 'erro', titulo: 'Não consegui verificar os servidores',\n    detalhes: ['A ponte recusou o pedido: ' + motivo + '. Confira o token no nó Configuração.'] } }];\n}\n\nconst ocupados = [];\nfor (const s of r.servidores) {\n  if (!cfg.servidores.includes(s.servidor)) continue;  // o que não foi escolhido não importa\n  const quem = nomes[s.servidor] + ' (porta ' + portas[s.servidor] + ')';\n  if (s.rodando) {\n    ocupados.push(quem + ': já está ligado e em uso. Pode ser outra pessoa, ou um fluxo em andamento (como a geração de notícias).');\n  } else if (s.porta_ocupada) {\n    ocupados.push(quem + ': a porta está ocupada por outro programa do computador.');\n  }\n}\nif (ocupados.length) {\n  return [{ json: { estado: 'ocupado', titulo: 'Servidor ocupado: nada foi ligado nem desligado', detalhes: ocupados } }];\n}\nreturn [{ json: { estado: 'livre' } }];"
       },
       "id": "3274ad5c-5ff5-53e2-8319-d74aee7da6db",
       "name": "Avaliar situação",
@@ -257,40 +281,21 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerador/subir",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Ponte-Token",
-              "value": "={{ $('Configuração').first().json.token_ponte }}"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 60000,
-          "response": {
-            "response": {
-              "neverError": true
-            }
-          }
-        }
+        "jsCode": "// Um item por servidor escolhido; os próximos nós rodam uma vez para cada item.\nconst cfg = $('Configuração').first().json;\nconst info = {\n  gerador: { nome: 'Gerador de imagens', porta: cfg.porta_gerador, saude: '/gerador/api/v1/health' },\n  gerenciador: { nome: 'Gerenciador de carrosséis', porta: cfg.porta_gerenciador, saude: '/gerenciador/saude' },\n};\nreturn cfg.servidores.map(s => ({ json: Object.assign({ servidor: s }, info[s]) }));"
       },
-      "id": "13be4dd7-55ab-56e7-80bc-ec76979b907e",
-      "name": "Subir gerador",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "1f5cdf18-ffa1-531f-a9d9-1c0700ff7cdd",
+      "name": "Servidores escolhidos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         1460,
         -220
-      ],
-      "onError": "continueErrorOutput"
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/gerenciador/subir",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/{{ $json.servidor }}/subir",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -309,19 +314,19 @@
           }
         }
       },
-      "id": "bcbea41b-f054-5e28-9cb0-69bf32dec2a6",
-      "name": "Subir gerenciador",
+      "id": "c9a82a5c-8b9c-5249-8b5d-68dce7e0693c",
+      "name": "Subir servidores",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         1700,
         -220
       ],
-      "onError": "continueErrorOutput"
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Os dois já foram mandados ligar, um logo depois do outro: eles iniciam ao mesmo tempo.\nconst g = $('Subir gerador').first().json;\nconst m = $input.first().json;\nconst problemas = [];\nif (g.ok !== true) problemas.push('gerador: ' + ((g.mensagem) || (g.erros && g.erros[0] && g.erros[0].mensagem) || 'a ponte não conseguiu ligar'));\nif (m.ok !== true) problemas.push('gerenciador: ' + ((m.mensagem) || (m.erros && m.erros[0] && m.erros[0].mensagem) || 'a ponte não conseguiu ligar'));\nif (problemas.length) throw new Error('Não consegui ligar: ' + problemas.join(' | '));\nreturn [{ json: { ok: true } }];"
+        "jsCode": "// Todos os escolhidos já foram mandados ligar, um logo depois do outro: eles iniciam ao mesmo tempo.\nconst escolhidos = $('Servidores escolhidos').all().map(i => i.json);\nconst problemas = [];\n$input.all().forEach((it, i) => {\n  const r = it.json;\n  if (r.ok !== true) {\n    const motivo = r.mensagem || (r.erros && r.erros[0] && r.erros[0].mensagem) || r.error || 'a ponte não conseguiu ligar';\n    problemas.push(escolhidos[i].servidor + ': ' + (typeof motivo === 'string' ? motivo : JSON.stringify(motivo)));\n  }\n});\nif (problemas.length) throw new Error('Não consegui ligar: ' + problemas.join(' | '));\nreturn escolhidos.map(e => ({ json: e }));"
       },
       "id": "1119685e-6abd-5e15-afbf-1111073a6b5a",
       "name": "Conferir se subiram",
@@ -336,7 +341,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/gerador/api/v1/health",
+        "url": "={{ $('Configuração').first().json.url_ponte }}{{ $json.saude }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -350,73 +355,43 @@
           "timeout": 10000
         }
       },
-      "id": "78336a50-ffd1-5c97-9202-41a6018fb1c8",
-      "name": "Conferir saúde do gerador",
+      "id": "e5b4a03d-ff25-5a0d-b1b8-759dd465d573",
+      "name": "Conferir saúde",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         2180,
         -220
       ],
-      "onError": "continueErrorOutput",
+      "onError": "continueRegularOutput",
       "retryOnFail": true,
       "maxTries": 24,
       "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Ponte-Token",
-              "value": "={{ $('Configuração').first().json.token_ponte }}"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 10000
-        }
-      },
-      "id": "b1036659-81a8-546e-ad6b-14d02fcb861f",
-      "name": "Conferir saúde do gerenciador",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2420,
-        -220
-      ],
-      "onError": "continueErrorOutput",
-      "retryOnFail": true,
-      "maxTries": 24,
-      "waitBetweenTries": 5000
-    },
-    {
-      "parameters": {
-        "jsCode": "const g = $('Conferir saúde do gerador').first().json;\nif (g.ready !== true) {\n  throw new Error('O gerador ligou, mas não está pronto: ' + ((g.problems || []).join(' | ') || 'sem detalhe'));\n}\nreturn [{ json: { ok: true } }];"
+        "jsCode": "const escolhidos = $('Servidores escolhidos').all().map(i => i.json);\nconst problemas = [];\n$input.all().forEach((it, i) => {\n  const r = it.json, e = escolhidos[i];\n  if (r.error) problemas.push(e.nome + ' ligou, mas não respondeu: ' + (typeof r.error === 'string' ? r.error : (r.error.message || JSON.stringify(r.error))));\n  else if (e.servidor === 'gerador' && r.ready !== true) {\n    problemas.push('Gerador de imagens ligou, mas não está pronto: ' + ((r.problems || []).join(' | ') || 'sem detalhe'));\n  }\n});\nif (problemas.length) throw new Error(problemas.join(' | '));\nreturn [{ json: { ok: true } }];"
       },
       "id": "d97d2d7b-c720-57b7-852b-ce289681e563",
       "name": "Avaliar prontidão",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2660,
+        2420,
         -220
       ],
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Configuração').first().json;\nconst fim = new Date(Date.now() + cfg.minutos * 60000);\nconst hora = fim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });\nconst gerador = 'http://127.0.0.1:' + cfg.porta_gerador;\nconst gerenciador = 'http://127.0.0.1:' + cfg.porta_gerenciador;\nconst linhas = [\n  'Ligados por ' + cfg.minutos + ' minutos: desligam sozinhos às ' + hora + '.',\n  '',\n  '<b>Gerador de imagens:</b> <a href=\"' + gerador + '\" target=\"_blank\">' + gerador + '</a>',\n  '<b>Gerenciador de carrosséis:</b> <a href=\"' + gerenciador + '\" target=\"_blank\">' + gerenciador + '</a>',\n  '',\n  'Abra os endereços neste computador. Para desligar antes, use o formulário Desligar.',\n];\nreturn [{ json: { titulo: 'Servidores ligados', mensagem: linhas.join('\\n'), desliga_as: hora } }];"
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst fim = new Date(Date.now() + cfg.minutos * 60000);\nconst hora = fim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });\nconst info = {\n  gerador: ['Gerador de imagens', cfg.porta_gerador],\n  gerenciador: ['Gerenciador de carrosséis', cfg.porta_gerenciador],\n};\nconst links = cfg.servidores.map(s => {\n  const url = 'http://127.0.0.1:' + info[s][1];\n  return '<b>' + info[s][0] + ':</b> <a href=\"' + url + '\" target=\"_blank\">' + url + '</a>';\n});\nconst plural = cfg.servidores.length > 1;\nconst linhas = [\n  (plural ? 'Ligados' : 'Ligado') + ' por ' + cfg.minutos + ' minutos: ' + (plural ? 'desligam sozinhos' : 'desliga sozinho') + ' às ' + hora + '.',\n  '',\n  ...links,\n  '',\n  'Abra os endereços neste computador. Para desligar antes, use o formulário Desligar.',\n];\nreturn [{ json: { titulo: plural ? 'Servidores ligados' : 'Servidor ligado', mensagem: linhas.join('\\n'), desliga_as: hora } }];"
       },
       "id": "c66d0248-5008-5cbd-b077-f4968fdae1b2",
       "name": "Montar mensagem de sucesso",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2900,
+        2660,
         -220
       ]
     },
@@ -437,7 +412,7 @@
       "type": "n8n-nodes-base.form",
       "typeVersion": 2.3,
       "position": [
-        3140,
+        2900,
         -220
       ]
     },
@@ -452,7 +427,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3380,
+        3140,
         -220
       ],
       "webhookId": "46cdae57-1a8e-5c13-a6fc-e60a295d5cb1"
@@ -460,7 +435,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/{{ $('Configuração').first().json.alvo }}/parar",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -484,21 +459,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3620,
+        3380,
         -220
       ],
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const r = $input.first().json;\nconst desligou = r.ok === true;\nreturn [{ json: { ok: desligou, mensagem: desligou ? 'Tempo esgotado: servidores desligados.' : 'Tempo esgotado, mas não consegui confirmar o desligamento. Confira as portas 7000 e 8000.', resposta_da_ponte: r } }];"
+        "jsCode": "const r = $input.first().json;\nconst desligou = r.ok === true;\nreturn [{ json: { ok: desligou, mensagem: desligou ? 'Tempo esgotado: servidores desligados.' : 'Tempo esgotado, mas não consegui confirmar o desligamento. Confira as portas dos servidores escolhidos (7000 e 8000).', resposta_da_ponte: r } }];"
       },
       "id": "e39df751-0992-50ae-898f-0fb98180586a",
       "name": "Resumo final",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3860,
+        3620,
         -220
       ]
     },
@@ -518,7 +493,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/{{ $('Configuração').first().json.alvo }}/parar",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -549,7 +524,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const motivo = $('Montar mensagem de falha').first().json.motivo;\nconst desligou = $input.first().json.ok === true;\nconst esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst linhas = ['Motivo: ' + esc(motivo), '',\n  desligou ? 'Os dois servidores foram desligados.' : 'Não consegui confirmar o desligamento (a ponte pode estar fora do ar). Confira as portas 7000 e 8000.'];\nreturn [{ json: { titulo: 'Não foi possível ligar os servidores', mensagem: linhas.join('\\n') } }];"
+        "jsCode": "const motivo = $('Montar mensagem de falha').first().json.motivo;\nconst desligou = $input.first().json.ok === true;\nconst esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst linhas = ['Motivo: ' + esc(motivo), '',\n  desligou ? 'Os servidores escolhidos foram desligados.' : 'Não consegui confirmar o desligamento (a ponte pode estar fora do ar). Confira as portas 7000 e 8000.'];\nreturn [{ json: { titulo: 'Não foi possível ligar os servidores', mensagem: linhas.join('\\n') } }];"
       },
       "id": "ca5ddc0c-c182-506c-a352-2c900e2ecc27",
       "name": "Texto da falha",
@@ -598,7 +573,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/todos/parar",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/servidores/{{ $('Configuração').first().json.alvo }}/parar",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -629,7 +604,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const r = $input.first().json;\nlet linhas;\nif (r.ok === true && Array.isArray(r.servidores)) {\n  linhas = [''].concat(r.servidores.map(s => '• ' + s.servidor + ': ' + (s.parou ? 'desligado' : (s.mensagem || 'nada a desligar'))));\n  linhas.push('', 'Servidores que não foram ligados por este fluxo não são desligados por ele.');\n} else {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || (r.error && (r.error.message || r.error)) || 'a ponte não respondeu';\n  linhas = ['Motivo: ' + String(motivo).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'Confira as portas 7000 e 8000.'];\n}\nconst ok = r.ok === true && Array.isArray(r.servidores);\nreturn [{ json: { titulo: ok ? 'Servidores desligados' : 'Não consegui desligar', mensagem: linhas.join('\\n').trim() } }];"
+        "jsCode": "const r = $input.first().json;\nlet linhas;\n// \"todos\" devolve {servidores:[...]}; um servidor só devolve o próprio resultado.\nconst lista = Array.isArray(r.servidores) ? r.servidores : (r.ok === true && r.servidor ? [r] : null);\nif (r.ok === true && lista) {\n  linhas = [''].concat(lista.map(s => '• ' + s.servidor + ': ' + (s.parou ? 'desligado' : (s.mensagem || 'nada a desligar'))));\n  linhas.push('', 'Servidores que não foram ligados por este fluxo não são desligados por ele.');\n} else {\n  const motivo = (r.erros && r.erros[0] && r.erros[0].mensagem) || (r.error && (r.error.message || r.error)) || 'a ponte não respondeu';\n  linhas = ['Motivo: ' + String(motivo).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'Confira as portas 7000 e 8000.'];\n}\nconst ok = r.ok === true && !!lista;\nreturn [{ json: { titulo: ok ? 'Servidores desligados' : 'Não consegui desligar', mensagem: linhas.join('\\n').trim() } }];"
       },
       "id": "e7798809-4608-5740-81da-18b985fe069f",
       "name": "Texto do desligamento",
@@ -747,7 +722,7 @@
       "main": [
         [
           {
-            "node": "Subir gerador",
+            "node": "Servidores escolhidos",
             "type": "main",
             "index": 0
           }
@@ -772,36 +747,22 @@
         ]
       ]
     },
-    "Subir gerador": {
+    "Servidores escolhidos": {
       "main": [
         [
           {
-            "node": "Subir gerenciador",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Montar mensagem de falha",
+            "node": "Subir servidores",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Subir gerenciador": {
+    "Subir servidores": {
       "main": [
         [
           {
             "node": "Conferir se subiram",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Montar mensagem de falha",
             "type": "main",
             "index": 0
           }
@@ -812,7 +773,7 @@
       "main": [
         [
           {
-            "node": "Conferir saúde do gerador",
+            "node": "Conferir saúde",
             "type": "main",
             "index": 0
           }
@@ -826,36 +787,11 @@
         ]
       ]
     },
-    "Conferir saúde do gerador": {
-      "main": [
-        [
-          {
-            "node": "Conferir saúde do gerenciador",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Montar mensagem de falha",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Conferir saúde do gerenciador": {
+    "Conferir saúde": {
       "main": [
         [
           {
             "node": "Avaliar prontidão",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Montar mensagem de falha",
             "type": "main",
             "index": 0
           }
