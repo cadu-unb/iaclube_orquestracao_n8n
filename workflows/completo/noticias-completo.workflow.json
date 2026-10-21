@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Notícias IA · Completo (texto → arte)\n**Parte 1, texto (faixa de cima):** lê os feeds, tira o que já foi publicado (Data Table), a IA escolhe as notícias e escreve os textos **e o prompt da imagem de cada uma**, cria o card no Trello e grava a memória. É o fluxo `noticias-1-texto`.\n\n**Parte 2, arte (faixa de baixo):** **Montar entrada dos cards** transforma o texto no mesmo JSON de `entradas/exemplo-noticias-10.json` e segue o fluxo `noticias-2-arte`: gera as imagens, monta os cards e comenta no card do Trello a pasta com as imagens.\n\n**Antes de rodar:** a **ponte** ligada no computador (`python3 scripts/ponte.py`) e o token dela no nó **Configuração**. Lá também ficam quantas notícias, o estilo das imagens e o tamanho.",
+        "content": "## Notícias IA · Completo (texto → arte)\n**Parte 1, texto (faixa de cima):** lê os feeds, tira o que já foi publicado (Data Table), a IA escolhe as notícias e escreve os textos **e o prompt da imagem de cada uma**, cria o card no Trello e grava a memória. É o fluxo `noticias-1-texto`.\n\n**Parte 2, arte (faixa de baixo):** **Montar entrada dos cards** transforma o texto no mesmo JSON de `entradas/exemplo-noticias-10.json` e segue o fluxo `noticias-2-arte`: gera as imagens, monta os cards e comenta no card do Trello a pasta com as imagens.\n\n**Antes de rodar:** a **ponte** ligada no computador (`python3 scripts/ponte.py`) e o token dela no nó **Configuração**. Lá também ficam quantas notícias, o nome do documento de estilo das imagens (o texto vem da pasta de documentos, pela ponte) e o tamanho.",
         "height": 380,
         "width": 640,
         "color": 4
@@ -86,7 +86,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token, tamanho da edição e das imagens.\nreturn [{ json: {\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  // (host.docker.internal NÃO existe nesse container; ele não tem extra_hosts.)\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'qFPgEFVBoIrIG2aHrN02aMR2YprNczxM',\n  // A IA escolhe entre noticias_min e noticias_max notícias. Até 6 o carrossel leva o Índice\n  // (o modelo de Índice do news tem 6 itens); com mais de 6, o Índice fica de fora.\n  noticias_min: 4,\n  noticias_max: 6,\n  serie: 'news',\n  assunto: 'IA em foco',        // entra no nome dos arquivos dos cards\n  marca: '@iaclube.help',       // marca que aparece no cabeçalho dos cards\n  // Acrescentado ao fim de todo prompt de imagem: é o que deixa as imagens com a mesma cara.\n  estilo_comum: \"flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark\",\n  // Tamanho das imagens (múltiplos de 16). Pequena 3:2 = 624 x 416 (cerca de 4 min cada).\n  // Média 3:2 = 944 x 624 (cerca de 9 min cada). O espaço da imagem no card é 839 x 592.\n  largura: 624,\n  altura: 416,\n  espera_subir_s: 5,            // pausa depois de subir cada servidor\n  intervalo_consulta_s: 30,     // de quanto em quanto tempo olhar a fila de imagens\n  tempo_maximo_geracao_min: 240 // desiste se as imagens passarem disso\n} }];"
+        "jsCode": "// Edite aqui. É o único lugar com endereço da ponte, token, tamanho da edição e das imagens.\nreturn [{ json: {\n  // A ponte roda no computador, como o usuário cadu (scripts/ponte.py). De dentro do container\n  // runv2-n8n-1 o computador é o gateway da rede runv2_default: 172.19.0.1.\n  // (host.docker.internal NÃO existe nesse container; ele não tem extra_hosts.)\n  url_ponte: 'http://172.19.0.1:7777',\n  token_ponte: 'qFPgEFVBoIrIG2aHrN02aMR2YprNczxM',\n  // A IA escolhe entre noticias_min e noticias_max notícias. Até 6 o carrossel leva o Índice\n  // (o modelo de Índice do news tem 6 itens); com mais de 6, o Índice fica de fora.\n  noticias_min: 4,\n  noticias_max: 6,\n  serie: 'news',\n  assunto: 'IA em foco',        // entra no nome dos arquivos dos cards\n  marca: '@iaclube.help',       // Nome do documento (da pasta de documentos compartilhada) com o estilo que se acrescenta ao fim de todo prompt de imagem:\n  // é o que deixa as imagens com a mesma cara. O texto mora na pasta e é lido pela ponte (nó Ler estilo).\n  estilo_documento: 'estilo-noticias',\n  // Tamanho das imagens (múltiplos de 16). Pequena 3:2 = 624 x 416 (cerca de 4 min cada).\n  // Média 3:2 = 944 x 624 (cerca de 9 min cada). O espaço da imagem no card é 839 x 592.\n  largura: 624,\n  altura: 416,\n  espera_subir_s: 5,            // pausa depois de subir cada servidor\n  intervalo_consulta_s: 30,     // de quanto em quanto tempo olhar a fila de imagens\n  tempo_maximo_geracao_min: 240 // desiste se as imagens passarem disso\n} }];"
       },
       "id": "779d51de-9258-5639-8264-c252cf32f4d3",
       "name": "Configuração",
@@ -597,7 +597,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma a edicao que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_comum, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Monta slides do carrossel': o que esta no card do Trello e o\n// que vai para a arte. Ordem dos cards: capa, indice, uma noticia por card, encerramento.\nconst cfg = $('Configuração').first().json;\nconst d = $('Monta slides do carrossel').first().json;\nconst noticias = Array.isArray(d.noticias) ? d.noticias : [];\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\n\nconst capa = doPapel('gancho')[0] || { titulo: '', texto: '' };\nconst indice = doPapel('contexto')[0] || { titulo: 'Índice' };\nconst corpo = doPapel('desenvolvimento');\nconst fim = doPapel('cta')[0] || { titulo: '', texto: '' };\n\nconst cards = [];\nconst imagens = [];\n\ncards.push({ modelo: 'capa', campos: { titulo: capa.titulo, corpo: capa.texto } });\n\n// O modelo de indice do news tem 6 itens (item_1 a item_6). Com mais noticias, fica de fora.\nif (noticias.length <= 6) {\n  const campos = { titulo: indice.titulo };\n  noticias.forEach((n, i) => { campos['item_' + (i + 1)] = umaLinha(n.rotulo_indice || n.manchete); });\n  cards.push({ modelo: 'indice', campos });\n}\n\nnoticias.forEach((n, i) => {\n  const s = corpo[i] || { titulo: umaLinha(n.manchete), texto: umaLinha(n.texto_slide) };\n  cards.push({ modelo: 'texto-com-imagem', campos: { titulo: s.titulo, corpo: s.texto } });\n  const prompt = umaLinha(n.prompt_imagem) ||\n    'an editorial illustration about artificial intelligence news, ' + umaLinha(n.rotulo_indice || n.manchete);\n  imagens.push({\n    card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n    mascara: 'imagem_1',\n    nome_arquivo: 'noticia-' + String(i + 1).padStart(2, '0') + (slug(n.rotulo_indice) ? '-' + slug(n.rotulo_indice) : ''),\n    prompt,\n  });\n});\n\ncards.push({ modelo: 'encerramento', campos: { titulo: fim.titulo, corpo: fim.texto } });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  nome: ('Notícias IA ' + data + ' ' + umaLinha(d.tema_card)).trim().slice(0, 80),\n  estilo_comum: cfg.estilo_comum || '',\n  entrada: { serie: cfg.serie, data, assunto: cfg.assunto, marca: cfg.marca, cards },\n  imagens,\n} }];\n"
+        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma a edicao que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_documento, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Monta slides do carrossel': o que esta no card do Trello e o\n// que vai para a arte. Ordem dos cards: capa, indice, uma noticia por card, encerramento.\nconst cfg = $('Configuração').first().json;\nconst d = $('Monta slides do carrossel').first().json;\nconst noticias = Array.isArray(d.noticias) ? d.noticias : [];\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\n\nconst capa = doPapel('gancho')[0] || { titulo: '', texto: '' };\nconst indice = doPapel('contexto')[0] || { titulo: 'Índice' };\nconst corpo = doPapel('desenvolvimento');\nconst fim = doPapel('cta')[0] || { titulo: '', texto: '' };\n\nconst cards = [];\nconst imagens = [];\n\ncards.push({ modelo: 'capa', campos: { titulo: capa.titulo, corpo: capa.texto } });\n\n// O modelo de indice do news tem 6 itens (item_1 a item_6). Com mais noticias, fica de fora.\nif (noticias.length <= 6) {\n  const campos = { titulo: indice.titulo };\n  noticias.forEach((n, i) => { campos['item_' + (i + 1)] = umaLinha(n.rotulo_indice || n.manchete); });\n  cards.push({ modelo: 'indice', campos });\n}\n\nnoticias.forEach((n, i) => {\n  const s = corpo[i] || { titulo: umaLinha(n.manchete), texto: umaLinha(n.texto_slide) };\n  cards.push({ modelo: 'texto-com-imagem', campos: { titulo: s.titulo, corpo: s.texto } });\n  const prompt = umaLinha(n.prompt_imagem) ||\n    'an editorial illustration about artificial intelligence news, ' + umaLinha(n.rotulo_indice || n.manchete);\n  imagens.push({\n    card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n    mascara: 'imagem_1',\n    nome_arquivo: 'noticia-' + String(i + 1).padStart(2, '0') + (slug(n.rotulo_indice) ? '-' + slug(n.rotulo_indice) : ''),\n    prompt,\n  });\n});\n\ncards.push({ modelo: 'encerramento', campos: { titulo: fim.titulo, corpo: fim.texto } });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  nome: ('Notícias IA ' + data + ' ' + umaLinha(d.tema_card)).trim().slice(0, 80),\n  estilo_documento: cfg.estilo_documento || '',\n  entrada: { serie: cfg.serie, data, assunto: cfg.assunto, marca: cfg.marca, cards },\n  imagens,\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -610,7 +610,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  tipo: dados.tipo || 'noticias',   // vira a pasta iaclube_n8n/<tipo>/ nas Imagens\n  estilo_comum: (dados.estilo_comum || '').trim(),\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nif (!/^[A-Za-z0-9_-]{1,64}$/.test((dados.estilo_documento || '').trim())) erros.push('estilo_documento é obrigatório: o nome de um documento de estilo da pasta compartilhada, sem .md (por exemplo estilo-noticias)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  tipo: dados.tipo || 'noticias',   // vira a pasta iaclube_n8n/<tipo>/ nas Imagens\n  estilo_documento: (dados.estilo_documento || '').trim(),\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
       },
       "id": "8ff5d995-09d0-5ce5-9b2f-e99326a894f3",
       "name": "Validar entrada",
@@ -729,7 +729,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = v.estilo_comum ? im.prompt.trim() + ', ' + v.estilo_comum : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\n// O estilo vem do documento lido pela ponte (nó Ler estilo): o texto mora na pasta de documentos compartilhada.\nconst estilo = String($('Ler estilo').first().json.corpo || '').trim();\nif (!estilo) throw new Error('O documento de estilo «' + v.estilo_documento + '» está vazio.');\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = estilo ? im.prompt.trim() + ', ' + estilo : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
       },
       "id": "26b313ea-2ecc-56da-b0cb-fd5d7cdfd79d",
       "name": "Montar pedidos de imagem",
@@ -1275,7 +1275,7 @@
           "mode": "id",
           "value": "={{ $('Trello - Criar card').first().json.id }}"
         },
-        "text": "={{ (() => {\n  const msg = $('Montar mensagem de falha').first().json.mensagem;\n  const e = $('Montar entrada dos cards').first().json;\n  const entrada = JSON.stringify({ versao: 1, nome: e.nome, estilo_comum: e.estilo_comum, entrada: e.entrada, imagens: e.imagens }, null, 2);\n  return ['A arte NAO foi gerada: ' + msg, '',\n    'O texto deste card continua valendo. Para gerar so a arte depois: salve o JSON abaixo como',\n    'entradas/<nome>.json no computador e rode o workflow \"Notícias IA · 2. Arte (imagens + cards)\" com',\n    'esse nome em Configuração > arquivo_entrada.', '', '```', entrada, '```'].join('\\n').slice(0, 15000);\n})() }}"
+        "text": "={{ (() => {\n  const msg = $('Montar mensagem de falha').first().json.mensagem;\n  const e = $('Montar entrada dos cards').first().json;\n  const entrada = JSON.stringify({ versao: 1, nome: e.nome, estilo_documento: e.estilo_documento, entrada: e.entrada, imagens: e.imagens }, null, 2);\n  return ['A arte NAO foi gerada: ' + msg, '',\n    'O texto deste card continua valendo. Para gerar so a arte depois: salve o JSON abaixo como',\n    'entradas/<nome>.json no computador e rode o workflow \"Notícias IA · 2. Arte (imagens + cards)\" com',\n    'esse nome em Configuração > arquivo_entrada.', '', '```', entrada, '```'].join('\\n').slice(0, 15000);\n})() }}"
       },
       "type": "n8n-nodes-base.trello",
       "typeVersion": 1,
@@ -1291,6 +1291,49 @@
       "position": [
         2960,
         1520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/documentos/{{ encodeURIComponent($('Validar entrada').first().json.estilo_documento) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "4b483308-34e8-53ed-917b-b64473cd6b29",
+      "name": "Ler estilo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        840,
+        980
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json;\nconst nome = $('Validar entrada').first().json.estilo_documento;\nconst detalhe = e.error\n  ? (e.error.message || JSON.stringify(e.error)) + (e.error.description ? ' — ' + e.error.description : '')\n  : JSON.stringify(e).slice(0, 300);\nreturn [{ json: { motivo: 'Não foi possível ler o documento de estilo «' + nome + '» pela ponte: ' + detalhe\n  + '. Confira se a ponte está no ar e se o arquivo ' + nome + '.md existe na pasta de documentos compartilhada.' } }];"
+      },
+      "id": "4bef9c77-ddc1-5901-a74f-c6878c7ef6e9",
+      "name": "Estilo não lido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        1140
       ]
     }
   ],
@@ -1554,7 +1597,7 @@
       "main": [
         [
           {
-            "node": "Subir gerador",
+            "node": "Ler estilo",
             "type": "main",
             "index": 0
           }
@@ -1943,6 +1986,35 @@
         [
           {
             "node": "Falha no fluxo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler estilo": {
+      "main": [
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Estilo não lido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estilo não lido": {
+      "main": [
+        [
+          {
+            "node": "Montar mensagem de falha",
             "type": "main",
             "index": 0
           }

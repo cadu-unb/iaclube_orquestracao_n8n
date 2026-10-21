@@ -7,7 +7,7 @@ Hoje há **dois caminhos** para as imagens das Notícias. Eles montam o prompt d
 | | `noticias-2-arte` | `completo/noticias-completo` |
 |---|---|---|
 | Quem escreve a cena | uma pessoa, no arquivo [`entradas/exemplo-noticias-10.json`](../../../entradas/exemplo-noticias-10.json) | a IA que escreve o texto (Claude Sonnet 4.6), no campo `prompt_imagem` de cada notícia |
-| De onde vem o estilo | `estilo_comum` do mesmo arquivo | `estilo_comum` do nó **Configuração** |
+| De onde vem o estilo | `estilo_documento` do mesmo arquivo (documento `estilo-noticias`) | `estilo_documento` do nó **Configuração** (documento `estilo-noticias`) |
 | Imagens | 10 (uma por notícia do arquivo) | uma por notícia escolhida (4 a 6) |
 | Já gerou imagens? | **sim**, com os prompts do arquivo: 19/10 (12:57, 13:48, 17:21) e 20/10 (11:48), 10 imagens cada, e 20/10 às 13:54 (2 imagens) | **não**: não há nenhuma imagem com prompt escrito pela IA das Notícias |
 
@@ -17,8 +17,8 @@ O mesmo texto, em dois lugares (se mudar um, mude o outro):
 
 > flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
 
-- Em [`workflows/completo/noticias-completo.workflow.json`](../../../workflows/completo/noticias-completo.workflow.json): nó **Configuração**, campo `estilo_comum`.
-- Em [`entradas/exemplo-noticias-10.json`](../../../entradas/exemplo-noticias-10.json): campo `estilo_comum`.
+- Em [`workflows/completo/noticias-completo.workflow.json`](../../../workflows/completo/noticias-completo.workflow.json): nó **Configuração**, campo `estilo_documento` (o texto do estilo mora no documento `estilo-noticias`, lido pela ponte).
+- Em [`entradas/exemplo-noticias-10.json`](../../../entradas/exemplo-noticias-10.json): campo `estilo_documento` (antes `estilo_comum`).
 - Tamanho: 624 × 416 (nó **Configuração**: `largura` e `altura`).
 
 Foi escrito por Claude em 18/10, junto com o arquivo de exemplo. Não vem do catálogo do gerador nem de uma regra aprovada.
@@ -74,7 +74,7 @@ a partir do campo "prompt_imagem". Escreva esse campo assim:
 
 | Quero mudar… | Onde |
 |---|---|
-| o estilo das imagens | `estilo_comum` na **Configuração** do `noticias-completo` **e** em `entradas/*.json` |
+| o estilo das imagens | o documento `estilo-noticias.md`, citado por `estilo_documento` na **Configuração** do `noticias-completo` **e** em `entradas/*.json` |
 | como a IA escreve a cena | o trecho acima, no nó **AI Agent - Noticias** do `noticias-completo` |
 | uma cena específica (caminho 1) | o campo `prompt` do item em `imagens[]` do arquivo de entrada |
 | o tamanho | `largura` e `altura` na **Configuração** (múltiplos de 16) |

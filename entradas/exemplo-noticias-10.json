@@ -3,7 +3,7 @@
   "_aviso": "Conteúdo de EXEMPLO para testar o fluxo. As notícias 1 a 6 vêm do teste de 08/09/2026 do iaclube_n8n; as 7 a 10 são textos genéricos de tendência, sem fonte. Troque por notícias reais antes de publicar.",
   "tipo": "noticias",
   "nome": "Notícias IA semana 12-18 outubro",
-  "estilo_comum": "flat vector editorial illustration, bold simple shapes, soft gradients, blue and warm yellow palette, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark",
+  "estilo_documento": "estilo-noticias",
   "entrada": {
     "serie": "news",
     "data": "2026-10-18",

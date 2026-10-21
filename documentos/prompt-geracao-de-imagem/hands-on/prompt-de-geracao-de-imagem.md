@@ -16,7 +16,7 @@ O que existe é um modelo **emprestado** das Notícias, `texto-com-imagem` (apro
 
 - não tem os nós do gerador de imagens (sobe só o gerenciador de carrosséis, produz os cards e o desliga);
 - o prompt da IA do texto **não** pede `prompt_imagem`;
-- não há `estilo_comum` na **Configuração**, nem tamanho de imagem.
+- não há `estilo_documento` na **Configuração**, nem tamanho de imagem.
 
 ## Não confundir com o "prompt pronto" do post
 
@@ -29,4 +29,4 @@ Nada disso foi feito. O caminho seria:
 1. escolher quais cards ganham imagem (usando o modelo emprestado `texto-com-imagem`);
 2. pedir `prompt_imagem` à IA, como no Dicionário (veja [dicionario/](../dicionario/prompt-de-geracao-de-imagem.md));
 3. copiar para o fluxo os nós do gerador de imagens do `dicionario-completo`;
-4. definir um `estilo_comum` do Hands on (a cor de acento do conjunto é o amarelo `#fbbb20`).
+4. criar um documento de estilo do Hands on (`estilo-hands-on.md`, na pasta compartilhada) e o `estilo_documento` dele (a cor de acento do conjunto é o amarelo `#fbbb20`).

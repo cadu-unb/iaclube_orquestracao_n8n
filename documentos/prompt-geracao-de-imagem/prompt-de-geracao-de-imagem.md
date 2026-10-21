@@ -8,7 +8,7 @@ Detalhes por conjunto de cards: [Notícias](noticias/prompt-de-geracao-de-imagem
 
 1. **A seção de prompts existe no gerador, mas não declara o estilo do IA Clube.** O que há lá é um catálogo de 23 prompts de exemplo e de teste (cenas de passarinho, lobo-guará, paisagens…, em estilos variados) e uma página **Prompts** na interface. Nada ali descreve "como são as imagens do IA Clube".
 2. **Nenhum fluxo usa esses prompts.** Os fluxos pedem ao gerador um **prompt livre** (`/api/v1/jobs/free`), não um prompt do catálogo (`/api/v1/jobs` com `prompt_id`), e não usam etiquetas.
-3. **O prompt de cada imagem é montado em dois pedaços, fora do gerador:** a **cena**, escrita pela IA que escreve o texto do post (ou à mão, no arquivo de exemplo das Notícias), e o **estilo**, um texto fixo (`estilo_comum`) guardado no nó **Configuração** de cada fluxo. A junção é `cena, estilo`.
+3. **O prompt de cada imagem é montado em dois pedaços, fora do gerador:** a **cena**, escrita pela IA que escreve o texto do post (ou à mão, no arquivo de exemplo das Notícias), e o **estilo**, um texto fixo que mora num **documento da pasta compartilhada** (`estilo-noticias.md`, `estilo-dicionario.md`; MVP 1.9) e que o fluxo busca pela ponte. A junção é `cena, estilo`.
 4. **O gerador local não acrescenta nada.** O texto chega ao `sd-cli` exatamente como o fluxo montou: sem estilo extra, sem prompt negativo. Não há API de IA externa gerando a imagem; a IA externa só escreve a **cena**.
 5. **O Hands on não gera imagens.** Os cards dele não têm espaço para imagem.
 
@@ -32,7 +32,7 @@ A categoria **Estilo** é uma **vitrine de técnicas**, não o estilo da marca. 
 
 ```
  CENA (inglês)                           ESTILO FIXO (inglês)
- campo prompt_imagem, escrito pela IA    texto estilo_comum, no nó Configuração
+ campo prompt_imagem, escrito pela IA    documento de estilo, lido pela ponte (nó Ler estilo)
  do post (ou à mão, no arquivo de        de cada fluxo
  exemplo das Notícias)
             \                                  /
@@ -43,7 +43,7 @@ A categoria **Estilo** é uma **vitrine de técnicas**, não o estilo da marca. 
           gerador local: sd-cli --prompt "<exatamente esse texto>"
 ```
 
-- O nó **Montar pedidos de imagem** faz `prompt = cena + ", " + estilo_comum`. O código é **o mesmo** nos três fluxos de arte (`noticias-2-arte`, `noticias-completo`, `dicionario-completo`).
+- O nó **Montar pedidos de imagem** faz `prompt = cena + ", " + estilo`, com o `estilo` que o nó **Ler estilo** trouxe do documento (`corpo`). O código é **o mesmo** nos três fluxos de arte (`noticias-2-arte`, `noticias-completo`, `dicionario-completo`).
 - O pedido vai por `/jobs/free` (prompt livre). Ele traz só `prompt`, `width`, `height` (624 × 416) e `nome_arquivo`. **Não leva `prompt_id` nem `etiquetas`.**
 - Sem etiquetas, o gerador devolve "o próprio prompt" e nem consulta a plataforma irmã (está no código: `CompositorInstrucoes.compor`).
 - O comando do motor leva o texto em `--prompt` e, fora ele, só opções técnicas (tamanho, 8 passos, CFG 1,0, threads, modelos). Não há prompt negativo nem sufixo de estilo.
@@ -68,21 +68,18 @@ a machine room with many connected modules and wires, only a few modules glowing
 Steps: 8, CFG scale: 1.0, Guidance: 3.5, Seed: 42, Size: 624x416, Unet: z_image_turbo-Q4_K.gguf, TE: Qwen3-4B-Instruct-2507-Q4_K_M.gguf, VAE: ae.safetensors, stable-diffusion.cpp
 ```
 
-A primeira parte (até `inactive,`) é a **cena** que a IA escreveu; o resto é o `estilo_comum` do fluxo, palavra por palavra. Nas imagens de Notícias é igual: a cena do arquivo de exemplo, seguida do estilo azul e amarelo. Em todas as imagens inspecionadas a semente foi **42** (o gerador não envia `--seed`; é o padrão do motor).
+A primeira parte (até `inactive,`) é a **cena** que a IA escreveu; o resto é o texto do documento de estilo do fluxo, palavra por palavra. Nas imagens de Notícias é igual: a cena do arquivo de exemplo, seguida do estilo azul e amarelo. Em todas as imagens inspecionadas a semente foi **42** (o gerador não envia `--seed`; é o padrão do motor).
 
 ## 5. Os prompts declarados estão sendo usados?
 
 **Não.** Consequências práticas:
 
 - Mudar o catálogo de prompts do gerador **não muda** nenhuma imagem dos fluxos.
-- O estilo está **copiado em três lugares**: `Configuração` do `noticias-completo`, `Configuração` do `dicionario-completo` e `estilo_comum` do `entradas/exemplo-noticias-10.json`. Mudar o visual das Notícias exige mudar dois deles.
+- **Desde o MVP 1.9 o estilo mora num lugar só:** os documentos `estilo-noticias.md` e `estilo-dicionario.md` (`tipo: imagem`, `categoria: estilo`, `uso: sufixo`) na pasta de documentos compartilhada (`documentos/servidores/documentos-compartilhados/prompts/`). O texto é **o mesmo** que estava no `estilo_comum` de cada fluxo (conferido por hash). A porta 8000 e a porta 7000 mostram e editam esses arquivos; o fluxo os lê pela ponte (`GET /documentos/<nome>`) e **para com uma mensagem clara** se não conseguir (nunca usa um texto escondido).
+- No nó **Configuração** de cada `completo` fica só o **nome** do documento (`estilo_documento`). No arquivo de `entradas/` do `noticias-2-arte`, `estilo_documento` substitui o `estilo_comum` (um arquivo antigo, com o texto em `estilo_comum`, continua valendo; os dois ao mesmo tempo é erro).
 - O texto do estilo foi escrito por Claude (o das Notícias em 18/10, o do Dicionário em 20/10, este a partir das cores do card: fundo `#f2f2f1`, texto `#0e1626`, acento `#e63415`). Não saiu do catálogo nem de uma regra aprovada por você.
-
-Caminhos possíveis, se você quiser que o estilo passe a ser declarado num lugar só (nada disso foi feito):
-
-1. **Manter no fluxo e documentar** (o mais simples): o `estilo_comum` de cada Configuração vira o estilo oficial, e este documento é o registro.
-2. **Catálogo do gerador:** criar entradas de estilo lá. Não serve direto: cada entrada do catálogo é um prompt **completo** (cena incluída), não um estilo para somar à cena de cada notícia.
-3. **Etiquetas** (`estilo/noticias.md`): é o desenho original para declarar estilo, mas depende da plataforma irmã servir os arquivos (a API não existe; há um simulador para testes) e de os fluxos mandarem `etiquetas` no pedido.
+- Para mudar o visual: edite o documento de estilo (pela tela **Prompts** de uma das duas plataformas ou direto no arquivo). A mudança vale na próxima execução dos fluxos, sem mexer no n8n.
+- **Os prompts de texto dos agentes** (e o bloco «A IMAGEM DE CADA NOTICIA») **continuam dentro do n8n** nesta versão (dúvida Q06 em aberto).
 
 ## 6. Como conferir o prompt de uma imagem
 

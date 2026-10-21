@@ -16,7 +16,7 @@ Os outros cards (capa, definição, encerramento) também não têm imagem.
 
 > flat vector editorial illustration, bold simple shapes, soft gradients, vivid red-orange and deep navy palette on a warm off-white background, clean composition, wide landscape framing, no text, no letters, no numbers, no logos, no watermark
 
-- Fica em [`workflows/completo/dicionario-completo.workflow.json`](../../../workflows/completo/dicionario-completo.workflow.json): nó **Configuração**, campo `estilo_comum`.
+- Fica em [`workflows/completo/dicionario-completo.workflow.json`](../../../workflows/completo/dicionario-completo.workflow.json): nó **Configuração**, campo `estilo_documento` (o nome do documento `estilo-dicionario`, na pasta de documentos compartilhada: o texto do estilo mora lá e o fluxo o lê pela ponte).
 - Tamanho: 624 × 416 (`largura` e `altura`), cerca de 4 minutos por imagem.
 - Foi escrito por Claude em 20/10 a partir das cores do card do Dicionário (fundo `#f2f2f1`, texto `#0e1626`, acento `#e63415`). É a versão "vermelho e azul-marinho" do estilo das Notícias (que usa azul e amarelo). Não vem do catálogo do gerador.
 
@@ -61,6 +61,6 @@ Parâmetros do motor nas duas: 8 passos, CFG 1,0, semente 42, 624 × 416.
 
 | Quero mudar… | Onde |
 |---|---|
-| o estilo das imagens | `estilo_comum` na **Configuração** do `dicionario-completo` |
+| o estilo das imagens | o documento `estilo-dicionario.md` (nome em `estilo_documento`, na **Configuração** do `dicionario-completo`) |
 | como a IA escreve a cena | o trecho acima, no nó **AI Agent - Dicionario** |
 | o tamanho | `largura` e `altura` na **Configuração** (múltiplos de 16) |

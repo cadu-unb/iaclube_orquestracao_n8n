@@ -1,0 +1,170 @@
+{
+  "descricao": "Casos do contrato 17 (documentos compartilhados). A 8000, a 7000 e a ponte leem `documentos-de-teste/` e têm de produzir exatamente isto.",
+  "validos": {
+    "prompt-simples.md": {
+      "titulo": "Prompt de notícias",
+      "tipo": "prompt",
+      "categoria": "assunto",
+      "tags": [
+        "noticias",
+        "ia"
+      ],
+      "extras": [],
+      "links": [],
+      "avisos": []
+    },
+    "glossario_com_sublinhado.md": {
+      "titulo": "Glossário de notícias",
+      "tipo": "glossario",
+      "categoria": "",
+      "tags": [
+        "noticias"
+      ],
+      "extras": [],
+      "links": [],
+      "avisos": []
+    },
+    "imagem-completa.md": {
+      "titulo": "Passarinho na janela",
+      "tipo": "imagem",
+      "categoria": "assunto",
+      "tags": [],
+      "extras": [
+        "uso: completo",
+        "largura: 1280",
+        "altura: 720"
+      ],
+      "uso": "completo",
+      "links": [],
+      "avisos": []
+    },
+    "imagem-sufixo.md": {
+      "titulo": "Risografia",
+      "tipo": "imagem",
+      "categoria": "estilo",
+      "tags": [],
+      "extras": [
+        "uso: sufixo"
+      ],
+      "uso": "sufixo",
+      "links": [],
+      "avisos": []
+    },
+    "com-categoria.md": {
+      "titulo": "Teste rápido",
+      "tipo": "prompt",
+      "categoria": "teste-rapido",
+      "tags": [
+        "ia"
+      ],
+      "extras": [],
+      "links": [],
+      "avisos": []
+    },
+    "chaves-extras.md": {
+      "titulo": "Com chaves extras",
+      "tipo": "prompt",
+      "categoria": "",
+      "tags": [
+        "ia"
+      ],
+      "extras": [
+        "versao: 2",
+        "perfil: rapido",
+        "uso: sufixo"
+      ],
+      "links": [],
+      "avisos": []
+    },
+    "crlf-e-bom.md": {
+      "titulo": "Com BOM e CRLF",
+      "tipo": "outros",
+      "categoria": "",
+      "tags": [
+        "ia"
+      ],
+      "extras": [],
+      "corpo": "Primeira linha.\nSegunda linha.\n",
+      "links": [],
+      "avisos": []
+    },
+    "sem-bloco.md": {
+      "titulo": "",
+      "tipo": "outros",
+      "categoria": "",
+      "tags": [],
+      "extras": [],
+      "links": [],
+      "avisos": []
+    },
+    "tipo-invalido.md": {
+      "titulo": "Tipo inventado",
+      "tipo": "outros",
+      "categoria": "",
+      "tags": [],
+      "extras": [],
+      "links": [],
+      "avisos": [
+        "tipo desconhecido: banana"
+      ]
+    },
+    "link-quebrado.md": {
+      "titulo": "Com link quebrado",
+      "tipo": "prompt",
+      "categoria": "",
+      "tags": [],
+      "extras": [],
+      "links": [
+        "nao-existe.md",
+        "prompt-simples.md"
+      ],
+      "quebrados": [
+        "nao-existe.md"
+      ],
+      "avisos": []
+    }
+  },
+  "ilegiveis": {
+    "grande-demais.md": "maior que 256 KB",
+    "nao-utf8.md": "não é UTF-8"
+  },
+  "ignorados": [
+    "Nome Invalido!.md",
+    "subpasta/ignorada.md"
+  ],
+  "criados_pelo_teste": {
+    "antigo.md.bak": "copia de seguranca; o .gitignore ignora *.bak, por isso o teste a cria e a espera ignorada"
+  },
+  "tags": {
+    "noticias": "Notícias",
+    "ia": "IA"
+  },
+  "categorias": {
+    "assunto": "Assunto",
+    "estilo": "Estilo",
+    "teste-rapido": "Teste rápido"
+  },
+  "nomes-validos": [
+    "prompt-noticias.md",
+    "glossario_noticias.md",
+    "a1.md",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+    "Prompt.md"
+  ],
+  "nomes-invalidos": [
+    "Nome Invalido!.md",
+    "_oculto.md",
+    "-x.md",
+    "con.md",
+    "COM1.md",
+    "lpt9.md",
+    "ação.md",
+    "../x.md",
+    "a/b.md",
+    "x.txt",
+    ".md",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+    "C:x.md"
+  ],
+  "tamanho_maximo_bytes": 262144
+}

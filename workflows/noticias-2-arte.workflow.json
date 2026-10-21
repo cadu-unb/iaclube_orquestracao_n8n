@@ -89,7 +89,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  tipo: dados.tipo || 'noticias',   // vira a pasta iaclube_n8n/<tipo>/ nas Imagens\n  estilo_comum: (dados.estilo_comum || '').trim(),\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst dados = $input.first().json;\n\nconst erros = [];\nconst cards = dados.entrada && dados.entrada.cards;\nif (!Array.isArray(cards) || cards.length === 0) erros.push('entrada.cards precisa ser uma lista com pelo menos um card');\nif (!Array.isArray(dados.imagens) || dados.imagens.length === 0) erros.push('imagens precisa ser uma lista com pelo menos uma imagem');\nif (dados.imagens && dados.imagens.length > 20) erros.push('no máximo 20 imagens por execução (limite da consulta de fila)');\nconst documento = (dados.estilo_documento || '').trim();\nconst literal = (dados.estilo_comum || '').trim();\nif (documento && literal) erros.push('use só um: estilo_documento (nome de um documento de estilo) ou estilo_comum (texto), não os dois');\nif (documento && !/^[A-Za-z0-9_-]{1,64}$/.test(documento)) erros.push('estilo_documento deve ser o nome do documento, sem .md (letras, números, hífen e sublinhado)');\nif (cfg.largura % 16 || cfg.altura % 16) erros.push('largura e altura da Configuração precisam ser múltiplos de 16');\n\nconst usados = new Set();\n(dados.imagens || []).forEach((im, i) => {\n  const onde = 'imagens[' + i + ']';\n  if (!Number.isInteger(im.card) || !cards || im.card < 1 || im.card > cards.length) {\n    erros.push(onde + '.card deve ser a posição de um card (1 a ' + (cards ? cards.length : '?') + ')');\n  } else if (usados.has(im.card + '/' + im.mascara)) {\n    erros.push(onde + ': o card ' + im.card + ' já tem imagem para a máscara ' + im.mascara);\n  } else {\n    usados.add(im.card + '/' + im.mascara);\n  }\n  if (typeof im.mascara !== 'string' || !im.mascara) erros.push(onde + '.mascara é obrigatória (por exemplo imagem_1)');\n  if (typeof im.prompt !== 'string' || im.prompt.trim().length < 3) erros.push(onde + '.prompt é obrigatório');\n});\nif (erros.length) throw new Error('Entrada inválida:\\n- ' + erros.join('\\n- '));\n\nreturn [{ json: {\n  cfg,\n  nome: dados.nome || 'carrossel_noticias',\n  tipo: dados.tipo || 'noticias',   // vira a pasta iaclube_n8n/<tipo>/ nas Imagens\n  estilo_documento: documento,\n  estilo_comum: literal,\n  entrada: dados.entrada,\n  imagens: dados.imagens,\n} }];"
       },
       "id": "ac166c89-a638-5354-9042-266ce0a93379",
       "name": "Validar entrada",
@@ -208,7 +208,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = v.estilo_comum ? im.prompt.trim() + ', ' + v.estilo_comum : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
+        "jsCode": "const v = $('Validar entrada').first().json;\nconst { largura, altura } = v.cfg;\n// O estilo vem do documento lido pela ponte (nó Ler estilo) ou, em arquivo antigo, do estilo_comum escrito na entrada.\nconst estilo = v.estilo_documento ? String($('Ler estilo').first().json.corpo || '').trim() : v.estilo_comum;\nif (v.estilo_documento && !estilo) throw new Error('O documento de estilo «' + v.estilo_documento + '» está vazio.');\nreturn v.imagens.map((im, i) => {\n  const nome = im.nome_arquivo || 'noticia-' + String(i + 1).padStart(2, '0');\n  const prompt = estilo ? im.prompt.trim() + ', ' + estilo : im.prompt.trim();\n  return { json: {\n    indice: i,\n    card: im.card,\n    mascara: im.mascara,\n    nome_arquivo: nome,\n    corpo: { prompt, width: largura, height: altura, nome_arquivo: nome },\n  } };\n});"
       },
       "id": "3c6188cb-084d-5a7c-931f-71889602a5c5",
       "name": "Montar pedidos de imagem",
@@ -717,6 +717,82 @@
         2960,
         760
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "09997318-ee9d-5206-94d6-a110974e22a1",
+              "leftValue": "={{ !!$json.estilo_documento }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1cd56c9c-7945-5813-8b18-a1f8164a7034",
+      "name": "Estilo vem de documento?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/documentos/{{ encodeURIComponent($('Validar entrada').first().json.estilo_documento) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "36cdc72c-7cf9-5d12-a104-516f9dc1c3d3",
+      "name": "Ler estilo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        840,
+        220
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json;\nconst nome = $('Validar entrada').first().json.estilo_documento;\nconst detalhe = e.error\n  ? (e.error.message || JSON.stringify(e.error)) + (e.error.description ? ' — ' + e.error.description : '')\n  : JSON.stringify(e).slice(0, 300);\nreturn [{ json: { motivo: 'Não foi possível ler o documento de estilo «' + nome + '» pela ponte: ' + detalhe\n  + '. Confira se a ponte está no ar e se o arquivo ' + nome + '.md existe na pasta de documentos compartilhada.' } }];"
+      },
+      "id": "dd1b711d-073b-5d6d-acdc-258cb67ef1a5",
+      "name": "Estilo não lido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        380
+      ]
     }
   ],
   "connections": {
@@ -764,7 +840,7 @@
       "main": [
         [
           {
-            "node": "Subir gerador",
+            "node": "Estilo vem de documento?",
             "type": "main",
             "index": 0
           }
@@ -1131,6 +1207,53 @@
         [
           {
             "node": "Falha no fluxo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estilo vem de documento?": {
+      "main": [
+        [
+          {
+            "node": "Ler estilo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler estilo": {
+      "main": [
+        [
+          {
+            "node": "Subir gerador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Estilo não lido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estilo não lido": {
+      "main": [
+        [
+          {
+            "node": "Montar mensagem de falha",
             "type": "main",
             "index": 0
           }

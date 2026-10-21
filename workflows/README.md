@@ -47,7 +47,7 @@ Os `completo` também têm o botão **Executar agora**. Todos usam a mesma **pon
 
 **Parte 1 (texto)** é o fluxo de texto do conjunto, com o prompt da IA ajustado aos limites de caracteres dos cards do gerenciador (bem menores que os dos fluxos de texto) e, nos conjuntos com imagem, com um `prompt_imagem` por slide. Um nó **Montar …** (`Montar entrada dos cards`, ou `Montar pedido de produção` no Hands on) transforma os slides nos cards do conjunto. **Parte 2 (arte)** gera as imagens (se houver), pede os cards ao gerenciador e comenta no card do Trello a pasta com o resultado. Se a arte falhar, o texto **já está no Trello** e o comentário de falha traz o JSON para refazer: nas Notícias e no Dicionário, para rodar só a arte (`noticias-2-arte`); no Hands on, para colar na tela do gerenciador (ou rodar o fluxo de novo).
 
-No nó **Configuração** de cada `completo`: o endereço e o token da ponte, a `serie`, o `tipo` (nome da pasta de saída), a `marca` e, quando há imagens, o `estilo_comum` e o tamanho delas. Notícias também tem `noticias_min`/`noticias_max` (padrão 4 a 6; com mais de 6 o Índice sai, porque o modelo tem 6 itens).
+No nó **Configuração** de cada `completo`: o endereço e o token da ponte, a `serie`, o `tipo` (nome da pasta de saída), a `marca` e, quando há imagens, o `estilo_documento` (o nome de um documento da pasta compartilhada, lido pela ponte: o **texto** do estilo não está mais no fluxo) e o tamanho delas. Notícias também tem `noticias_min`/`noticias_max` (padrão 4 a 6; com mais de 6 o Índice sai, porque o modelo tem 6 itens).
 
 ## Ordem de inserção
 
@@ -74,6 +74,15 @@ Os fluxos de arte (`noticias-2-arte` e os três `completo`) pedem ao gerenciador
 O caminho do arquivo aparece no comentário que o fluxo deixa no card do Trello (os três `completo`) e na saída do último nó (`instrucoes`). O `.json` **não** entra na lista `arquivos` (que só tem as imagens). A pasta de saída de cada conjunto é o `tipo` da Configuração: `noticias`, `dicionario` e `hands-on`.
 
 **Exige o gerenciador atualizado.** A opção `exportacao.instrucoes` foi acrescentada ao `iaclube_n8n` em 20/10/2026 (antes a API não a aceitava: o pedido dava `422 pedido_invalido`). Se o gerenciador estiver de pé desde antes disso, reinicie-o; os fluxos o sobem e o desligam a cada execução, então basta rodar de novo.
+
+## O estilo das imagens: um documento (MVP 1.9)
+
+O texto que se acrescenta ao fim de todo prompt de imagem (o `estilo_comum` de antes) agora é um **documento** da pasta de documentos compartilhada com as portas 8000 e 7000: `estilo-noticias.md` e `estilo-dicionario.md`, em `documentos/servidores/documentos-compartilhados/prompts/`. Nos três fluxos de arte, o nó **Ler estilo** busca o texto pela ponte (`GET /documentos/<nome>`, só leitura, com o mesmo token) e o **Montar pedidos de imagem** o usa; o prompt final continua `cena, estilo`, **idêntico** ao de antes.
+
+- **Configuração** (`noticias-completo` e `dicionario-completo`): `estilo_documento: 'estilo-noticias'` (ou `'estilo-dicionario'`). Para trocar o estilo, troque o **texto do documento** (pela tela Prompts ou no arquivo), não o fluxo.
+- **`noticias-2-arte`:** o arquivo de `entradas/` traz `estilo_documento` no lugar de `estilo_comum`. Um arquivo antigo, com `estilo_comum` (o texto), continua valendo; os dois juntos dão erro de validação.
+- **Se a ponte não conseguir ler o documento** (ponte desligada, documento inexistente, nome errado, pasta ausente), o fluxo **para antes de subir o gerador**, com uma mensagem que diz qual documento (`Não foi possível ler o documento de estilo «…»`). Não existe texto de reserva escondido.
+- A ponte aponta para a pasta compartilhada por padrão; outra pasta: `python3 scripts/ponte.py --pasta-documentos /caminho`. Reinicie a ponte depois de atualizar o `ponte.py`.
 
 ## Onde fica o token da ponte
 
