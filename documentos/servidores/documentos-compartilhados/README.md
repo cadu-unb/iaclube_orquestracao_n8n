@@ -68,7 +68,7 @@ Arquivo usado: **`estilo-dicionario.md`** (vermelho-alaranjado e azul-marinho so
 
 ### Para os cards de «Mão na massa» (`completo/hands_on-completo`, quarta 15h)
 
-**Nenhum arquivo desta pasta.** Esse fluxo não tem imagens: não sobe o gerador, não pede nenhum documento à ponte e só produz os cards no gerenciador. O texto é escrito pela IA com as instruções que estão dentro do nó **AI Agent - Mao na Massa**.
+**Nenhum arquivo desta pasta.** Hoje esse fluxo não gera imagens: não sobe o gerador, não pede nenhum documento à ponte e só produz os cards no gerenciador. (O catálogo **permite** card com imagem no Mão na massa, o modelo `texto-com-imagem`; é o fluxo que ainda não o usa. Está no `A-FAZER.md`, item 2.) O texto é escrito pela IA com as instruções que estão dentro do nó **AI Agent - Mao na Massa**.
 
 O arquivo `como-montar-cards-hands-on.md` existe para a tela Prompts da 8000, mas **o fluxo não o lê**.
 

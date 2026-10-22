@@ -42,3 +42,22 @@ O MVP 1.9 existiu para o **designer que revisa o loop** ter **um lugar simples**
 ### Pronto quando
 
 Os três fluxos de `workflows/completo/` rodam no n8n pelos endereços `/api/v1/…`, a ponte aceita os novos, **o guia de imagem dos agentes de Notícias e Dicionário é editável pela tela Prompts**, os testes passam e os endereços obsoletos foram retirados da 8000.
+
+## 2. Cards com imagem no Mão na massa (médio prazo, **sem prazo e sem urgência**)
+
+**Pedido do usuário em 2026-10-22.** Não é obrigatório: nada quebra se isso não for feito. Também **não** é uma ideia descartada: é para **pensar num futuro próximo** (depois do MVP 1.9.1, com a fase H já feita).
+
+### Onde estamos (conferido em 2026-10-22)
+
+- **A API já oferece:** o conjunto `hands-on` tem o modelo `texto-com-imagem` (com `imagem_1`), emprestado das Notícias e aprovado em 12/10/2026. Ele aparece em `GET /api/v1/integracao/conjuntos`.
+- **O fluxo não usa:** `completo/hands_on-completo` monta só `capa`, `texto-titulo-grande`, `passo-a-passo`, `texto-titulo-compacto` e `encerramento`. O agente não escreve cena de imagem, o fluxo não sobe o gerador (7000) e não lê nenhum documento de estilo.
+- **Não existe `estilo-hands-on.md`** na pasta de documentos compartilhados (só `estilo-noticias.md` e `estilo-dicionario.md`).
+
+### O que precisaria ser decidido e feito (quando chegar a hora)
+
+1. **Quantos cards com imagem** (um ou dois) e **onde** na sequência (por exemplo, no resultado, ou num passo importante).
+2. **Documento de estilo** `estilo-hands-on.md` (tipo `imagem`, `uso: sufixo`, `origem: 7000` ou `outro`), editável na tela Prompts, como os outros dois.
+3. **Agente:** acrescentar o pedido do campo `prompt_imagem` só nos slides escolhidos. Se a fase H já tiver criado um documento de guia de imagem, criar o `guia-de-imagem-hands-on.md` do mesmo jeito (não escrever o guia dentro do nó).
+4. **Fluxo:** trazer do `noticias-completo` os nós de ler o estilo, subir e desligar o gerador, enfileirar e esperar as imagens; trocar `texto-titulo-compacto` (ou o card escolhido) por `texto-com-imagem` nos slides com imagem; conferir os limites de caracteres desse modelo no Mão na massa.
+5. **Tempo:** cada imagem leva de 4 a 9 minutos (624×416 a 944×624), então o fluxo do Mão na massa, hoje curto, passa a durar mais; olhar o horário de quarta 15h.
+6. **Provar:** rodar o fluxo no n8n, um de cada vez, e conferir os cards (a imagem cabe no espaço de 839×592 do `texto-com-imagem`).
