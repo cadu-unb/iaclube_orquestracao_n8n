@@ -26,6 +26,8 @@ testes/                              testes da ponte e dos nós dos fluxos (roda
 scripts/servidor.sh                  sobe, para e consulta os dois servidores
 ```
 
+> **A fazer:** revisar os fluxos de `workflows/completo/` para a API do gerenciador em `/api/v1/…` (pedido de 2026-10-22). Ver [A-FAZER.md](A-FAZER.md).
+
 ## Os fluxos
 
 | Conjunto | Só o texto | Só a arte | Completo | Dispara | Imagens |
