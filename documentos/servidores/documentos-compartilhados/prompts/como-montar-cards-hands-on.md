@@ -2,6 +2,7 @@
 titulo: Como montar os cards de Mão na massa
 tipo: prompt
 tags: [guia-de-cards, mao-na-massa]
+origem: 8000
 ---
 # Como montar os cards de Mão na massa
 

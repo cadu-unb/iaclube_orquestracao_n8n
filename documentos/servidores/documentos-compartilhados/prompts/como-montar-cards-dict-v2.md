@@ -2,6 +2,7 @@
 titulo: Como montar os cards de Dicionário IA (v2)
 tipo: prompt
 tags: [guia-de-cards, dicionario-ia-v2]
+origem: 8000
 ---
 # Como montar os cards de Dicionário IA (v2)
 

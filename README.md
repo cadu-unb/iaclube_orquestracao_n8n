@@ -20,7 +20,7 @@ workflows/                           os fluxos do n8n (Workflows → Import from
   dicionario-v1.json                   só o texto do Dicionário IA
   hands_on-v1.json                     só o texto do Hands on
 entradas/exemplo-noticias-10.json    entrada de exemplo do fluxo noticias-2-arte (10 notícias + o prompt de cada imagem)
-documentos/servidores/documentos-compartilhados/prompts/   a pasta de documentos (prompts, glossários, estilos de imagem) que as portas 8000 e 7000 e o n8n compartilham
+documentos/servidores/documentos-compartilhados/prompts/   a pasta de documentos (prompts, glossários, estilos de imagem) que as portas 8000 e 7000 e o n8n compartilham (versionada aqui; ver documentos/servidores/documentos-compartilhados/README.md)
 scripts/ponte.py                     serviço HTTP no computador que o n8n (em Docker) chama; também **lê** os documentos (GET /documentos)
 testes/                              testes da ponte e dos nós dos fluxos (rodam sem o n8n)
 scripts/servidor.sh                  sobe, para e consulta os dois servidores

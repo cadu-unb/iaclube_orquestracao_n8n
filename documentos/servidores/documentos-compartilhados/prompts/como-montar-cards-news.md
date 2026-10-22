@@ -2,6 +2,7 @@
 titulo: Como montar os cards de Notícias IA
 tipo: prompt
 tags: [guia-de-cards, noticias-ia]
+origem: 8000
 ---
 # Como montar os cards de Notícias IA
 

@@ -2,6 +2,7 @@
 titulo: Prompt de Notícias IA
 tipo: prompt
 tags: [noticias, ia]
+origem: 8000
 ---
 # Prompt de Notícias IA
 

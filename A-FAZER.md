@@ -19,10 +19,15 @@ Os três fluxos de `workflows/completo/` falam só com a **ponte** (`172.19.0.1:
 
 A ponte também tem uma lista de endereços permitidos para o gerenciador (`scripts/ponte.py`, `PERMITIDOS["gerenciador"]`: `/(saude|integracao/(producao|validar|conjuntos|prompt))`), que precisa aceitar o prefixo novo.
 
+### O objetivo que não pode se perder (lembrado pelo usuário em 2026-10-22)
+
+O MVP 1.9 existiu para o **designer que revisa o loop** ter **um lugar simples** (a tela **Prompts**, nas portas 8000 e 7000) para **editar os textos que guiam a geração de imagem**, **sem abrir o n8n**; o n8n só os **carrega**. O estilo das imagens já é documento. **Falta o guia de imagem de cada agente**: a seção **A IMAGEM DE CADA NOTICIA** (≈ 1,5 mil letras) do nó `AI Agent - Noticias` e **AS IMAGENS** (≈ 1 mil) do nó `AI Agent - Dicionario` ainda moram dentro do n8n (Hands on não tem imagens). A **tarefa 2b** abaixo os move.
+
 ### Tarefas
 
 1. **Ponte:** a lista de permitidos aceita `/api/v1/saude` e `/api/v1/integracao/(producao|validar|conjuntos|prompt)` (e, por um tempo, os antigos); os testes de `testes/` cobrem os dois; **não** mexer na regra do token.
 2. **Os três fluxos de `workflows/completo/`:** trocar os dois endereços da tabela acima; **nenhuma outra** mudança de comportamento; conferir os nós "Código" que leem `$json` da resposta (o corpo **não muda**: só o endereço).
+2b. **Guia de imagem dos agentes em documentos** (Q13 do `iaclube_n8n`, opção C): criar `guia-de-imagem-noticias.md` e `guia-de-imagem-dicionario.md` em `documentos/servidores/documentos-compartilhados/prompts/` (`tipo: prompt`, tag `n8n`, `origem: outro`) com o texto **exato** das duas seções; um nó **Ler guia de imagem** (como o **Ler estilo**) antes de cada agente; o prompt do agente passa a usar `{{ $('Ler guia de imagem').item.json.corpo }}` no lugar da seção. **O prompt final tem de sair byte a byte igual** ao de antes (simulação em `testes/`), com **falha clara** se o documento não vier (diz qual) e recusa se o texto trouxer `{{ }}`. Documentar em `workflows/README.md` quais documentos o n8n lê e onde editá-los. Prova final: o designer muda uma frase na tela Prompts e o próximo disparo usa a frase nova, sem abrir o n8n.
 3. **Os demais fluxos** (`noticias-2-arte`, `noticias-1-texto`, `servidores-sob-demanda`, `dicionario-v1`, `hands_on-v1`): conferir se chamam o gerenciador pelos endereços antigos e, se chamarem, trocar também (o usuário pediu, em especial, `workflows/completo`).
 4. **Prova sem o n8n:** rodar a suíte de `testes/` (usar o venv do `iaclube_n8n`); **com o n8n**, rodar um fluxo de cada vez (reiniciar a ponte antes; ela serve `/documentos` desde o 1.9).
 5. **Documentação:** `workflows/README.md`, `README.md`, `RELATORIO.md` e `PONTE_AUTOSTART.md` com os endereços novos.
@@ -36,4 +41,4 @@ A ponte também tem uma lista de endereços permitidos para o gerenciador (`scri
 
 ### Pronto quando
 
-Os três fluxos de `workflows/completo/` rodam no n8n pelos endereços `/api/v1/…`, a ponte aceita os novos, os testes passam e o `iaclube_n8n` foi avisado.
+Os três fluxos de `workflows/completo/` rodam no n8n pelos endereços `/api/v1/…`, a ponte aceita os novos, **o guia de imagem dos agentes de Notícias e Dicionário é editável pela tela Prompts**, os testes passam e os endereços obsoletos foram retirados da 8000.

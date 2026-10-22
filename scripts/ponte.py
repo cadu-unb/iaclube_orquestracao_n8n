@@ -368,6 +368,8 @@ def main() -> int:
     cfg.porta_gerador, cfg.porta_gerenciador = a.porta_gerador, a.porta_gerenciador
     cfg.pasta_entradas, cfg.script = a.entradas, a.script
     cfg.pasta_documentos = a.pasta_documentos
+    # Os servidores que a ponte sobe herdam a pasta de documentos (contrato 17), salvo se já houver outra.
+    os.environ.setdefault("IACLUBE_DOCUMENTOS", str(a.pasta_documentos.resolve()))
     cfg.token, origem = _ler_token(a.token)
 
     for rotulo, pasta in (("gerador", cfg.pasta_gerador), ("gerenciador", cfg.pasta_gerenciador), ("entradas", cfg.pasta_entradas), ("documentos", cfg.pasta_documentos)):

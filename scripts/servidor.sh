@@ -23,6 +23,14 @@ PASTA="${3:-}"
 PORTA="${4:-}"
 
 ESTADO="${IACLUBE_ORQ_ESTADO:-${XDG_STATE_HOME:-$HOME/.local/state}/iaclube-orquestracao}"
+
+# Pasta de documentos única (contrato 17 do iaclube_n8n): os dois servidores a usam, a menos que
+# IACLUBE_DOCUMENTOS já venha definida. Sem a pasta no disco, nada é exportado e cada servidor mostra o aviso.
+RAIZ_ORQ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DOCUMENTOS_PADRAO="$RAIZ_ORQ/documentos/servidores/documentos-compartilhados/prompts"
+if [ -z "${IACLUBE_DOCUMENTOS:-}" ] && [ -d "$DOCUMENTOS_PADRAO" ]; then
+  export IACLUBE_DOCUMENTOS="$DOCUMENTOS_PADRAO"
+fi
 ESPERA_PARADA_S=25
 
 saida() { # ok servidor acao mensagem [extra-json]

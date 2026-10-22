@@ -2,6 +2,7 @@
 titulo: Como montar arquivos
 tipo: outros
 tags: [guia]
+origem: 8000
 ---
 # Como montar arquivos
 
