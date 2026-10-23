@@ -281,7 +281,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Um item por servidor escolhido; os próximos nós rodam uma vez para cada item.\nconst cfg = $('Configuração').first().json;\nconst info = {\n  gerador: { nome: 'Gerador de imagens', porta: cfg.porta_gerador, saude: '/gerador/api/v1/health' },\n  gerenciador: { nome: 'Gerenciador de carrosséis', porta: cfg.porta_gerenciador, saude: '/gerenciador/saude' },\n};\nreturn cfg.servidores.map(s => ({ json: Object.assign({ servidor: s }, info[s]) }));"
+        "jsCode": "// Um item por servidor escolhido; os próximos nós rodam uma vez para cada item.\nconst cfg = $('Configuração').first().json;\nconst info = {\n  gerador: { nome: 'Gerador de imagens', porta: cfg.porta_gerador, saude: '/gerador/api/v1/health' },\n  gerenciador: { nome: 'Gerenciador de carrosséis', porta: cfg.porta_gerenciador, saude: '/gerenciador/api/v1/saude' },\n};\nreturn cfg.servidores.map(s => ({ json: Object.assign({ servidor: s }, info[s]) }));"
       },
       "id": "1f5cdf18-ffa1-531f-a9d9-1c0700ff7cdd",
       "name": "Servidores escolhidos",

@@ -203,5 +203,5 @@ def test_n05_os_documentos_de_estilo_tem_o_texto_identico_ao_estilo_comum_de_ant
 def test_a_pasta_de_verdade_so_tem_documentos_e_a_ponte_a_le_inteira():
     lista = ponte.listar_documentos(PASTA_DE_VERDADE)
     # 6 da 8000 + 2 estilos do n8n + os 23 prompts de imagem da 7000 (migrados na fase 0A do 1.9.1)
-    assert lista["ilegiveis"] == [] and lista["total"] == 31
+    assert lista["ilegiveis"] == [] and lista["total"] == 33  # 31 + os 2 guias de imagem dos agentes (fase H do 1.9.1)
     assert not (PASTA_DE_VERDADE / "README.md").exists()

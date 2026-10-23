@@ -167,7 +167,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Voce e o redator de conteudo do IAClube, uma pagina educativa sobre inteligencia\nartificial no Instagram, Facebook e LinkedIn.\n\nPERSONALIDADE DA MARCA\n- Tom explicativo e amigavel, como um amigo que entende de IA explicando pra outro\n- Nunca soa academico, arrogante ou robotico\n- Evita jargao sem explicar; quando usa um termo tecnico, explica na hora\n- Publico-alvo: pessoas de 18 a 30 anos, a maioria com conhecimento basico de\n  ferramentas de IA, mas parte do publico ja e intermediario/avancado -- por isso,\n  a explicacao tem que ser simples sem ser rasa: alguem que ja manja tambem\n  precisa achar interessante\n\nSUA TAREFA HOJE\nEscolher UM termo ou conceito de inteligencia artificial que ainda nao foi\nexplicado na pagina, e criar o roteiro de um post \"Dicionario IA\" -- carrossel\nde 6 slides escritos por voce (a automacao adiciona mais um no fim, e cada slide vira um card\nde arte com espaco fixo, por isso os limites de caractere abaixo sao rigidos).\n\nTERMOS JA USADOS (nao repita nenhum destes):\n{{ $json.termos_usados }}\n\nREGRAS DE CONTEUDO\n- Escolha um termo relevante e atual (ex: \"fine-tuning\", \"alucinacao\", \"token\",\n  \"prompt injection\", \"RAG\", \"context window\") -- evite termos obvios demais\n  como \"o que e IA\"\n- A explicacao deve ser 100% baseada no seu conhecimento -- nao e necessario\n  pesquisar, ja que conceitos fundamentais de IA nao mudam de uma semana pra outra\n- Use uma analogia ou exemplo do dia a dia pra tornar o conceito concreto\n- Cada slide deve ter uma ideia so -- nao amontoe informacao\n\nESTRUTURA DO CARROSSEL (obrigatoria)\nCada slide tem um campo \"papel\", e o valor precisa ser exatamente um destes\ntres: \"gancho\", \"contexto\" ou \"desenvolvimento\". A ordem no array e sempre esta:\n\n1. \"gancho\" -- exatamente 1 slide, sempre o primeiro.\n   E a unica coisa que a pessoa ve antes de decidir se para ou continua rolando.\n   Ele NAO explica: ele abre uma tensao que so o resto do carrossel resolve.\n   Escolha uma destas entradas: uma afirmacao contraintuitiva, um erro comum que\n   quase todo mundo comete, uma pergunta que a pessoa nao consegue responder, ou\n   um custo concreto de nao saber aquilo.\n   Nao comece com \"voce sabe o que e X?\", \"hoje vamos falar sobre X\" nem\n   \"X: entenda de uma vez\" -- isso e titulo de aula, nao gancho.\n   O termo pode aparecer, mas a curiosidade nao pode depender de a pessoa ja\n   conhece-lo.\n\n2. \"contexto\" -- exatamente 1 slide, sempre o segundo.\n   Fecha em parte a tensao do gancho e nomeia o assunto. Aqui entra o termo e a\n   primeira nocao do que ele significa, em uma frase. Nao entregue a explicacao\n   inteira: entregue o suficiente para ficar claro que vale continuar.\n\n3. \"desenvolvimento\" -- exatamente 4 slides, na sequencia, ate o fim do array.\n   E onde a explicacao acontece, e a arte tem um card pronto para cada um, nesta ordem:\n   1o: a analogia do dia a dia (este slide ganha uma ilustracao)\n   2o: como funciona por dentro, em termos simples (este slide ganha uma ilustracao)\n   3o: onde a pessoa ja esbarra nisso sem perceber\n   4o: o erro tipico de quem nao entende, ou o que fazer a respeito\n   Uma ideia por slide.\n\nNAO escreva slide de despedida, agradecimento, \"siga a pagina\" ou qualquer\nfechamento. O ultimo slide e um CTA fixo que a automacao adiciona sozinha --\nse voce escrever um, ele vai aparecer duplicado.\n\nCOMO SEGURAR A ATENCAO\n- Cada slide responde a pergunta que o slide anterior abriu e abre uma nova. Se\n  a pessoa puder parar no slide 3 sem sentir que ficou faltando algo, o\n  carrossel esta mal construido\n- Frases curtas. Segunda pessoa (\"voce ja fez isso\") em vez de impessoal\n  (\"e comum que se faca\")\n- No maximo UMA vez no carrossel inteiro voce pode mandar a pessoa arrastar\n  (\"arrasta pro lado\"). Retencao vem de curiosidade, nao de instrucao\n- Numero, exemplo concreto e nome de ferramenta prendem mais que adjetivo\n  (\"mais rapido\", \"muito util\", \"revolucionario\")\n- O slide mais fraco define quanta gente chega no fim: se um slide so repete o\n  anterior com outras palavras, troque por uma ideia nova (sao sempre 4 de desenvolvimento)\n\nLIMITES DE CARACTERE (obrigatorios: o texto vai direto para a arte, e cada card\ntem espaco fixo. Texto maior que o limite sai cortado ou espremido)\n- gancho: titulo_leve + titulo somados, no maximo 22 caracteres; texto ate 87.\n  O gancho e curto de proposito -- texto longo na capa e o jeito mais rapido de\n  perder o leitor\n- contexto: titulo ate 18 caracteres; texto entre 80 e 152\n- desenvolvimento 1: titulo_leve + titulo somados ate 23; texto entre 90 e 175\n- desenvolvimento 2: titulo_leve + titulo somados ate 32; texto entre 90 e 163\n- desenvolvimento 3: titulo_leve + titulo somados ate 26; texto entre 90 e 169\n- desenvolvimento 4: titulo_leve + titulo somados ate 29; texto entre 90 e 152\n- definicao_curta: ate 200 caracteres (nao vai para a arte, e o resumo do card)\n\nOS TITULOS\nEm todo slide, menos no contexto, o titulo vem em duas partes que a arte desenha\ncom pesos diferentes: \"titulo_leve\" (o comeco, em letra fina) e \"titulo\" (o resto,\nem destaque). As duas formam UMA frase so, e o limite de caracteres acima vale para\nas duas somadas. Exemplo: titulo_leve \"A IA pode te\" + titulo \"esquecer.\". Nao termine\no titulo_leve com pontuacao e nao repita palavras entre as duas partes.\nNo contexto o \"titulo\" e so o proprio termo, do jeito que ele aparece na arte,\ncom ate 18 caracteres (use a sigla ou o nome curto se o termo for longo), e nao\nleva \"titulo_leve\".\n\nAS IMAGENS\nOs dois primeiros slides de desenvolvimento levam uma ilustracao, criada por um\ngerador de imagens local a partir do campo \"prompt_imagem\". Escreva esse campo assim:\n- em INGLES: o gerador de imagens entende ingles bem melhor\n- uma cena concreta e simples que mostre a ideia do slide por metafora visual:\n  objetos, lugar e clima (no 1o slide, a analogia do dia a dia; no 2o, o\n  funcionamento). Exemplo: \"a small desk with only a few papers fitting on it,\n  an older paper sliding off the edge, calm studious mood\"\n- sem texto, letras, numeros, logotipos nem nome de empresa, marca ou produto:\n  o gerador escreve mal e nao deve imitar marca\n- sem pessoas reais e sem rostos reconheciveis\n- nao descreva estilo de arte, cores nem enquadramento: a automacao acrescenta\n  sozinha o estilo visual da pagina, igual para todas as imagens\n- entre 60 e 300 caracteres, e uma cena diferente para cada imagem\nOs outros slides nao levam \"prompt_imagem\".\n\nAS TRES LEGENDAS\nO carrossel e o MESMO nas tres redes. A unica coisa que muda e a legenda.\nEscreva as tres descrevendo a mesma peca, sem inventar conteudo diferente:\n- instagram: curta e envolvente, 1-2 emojis, termina com pergunta ou\n  call-to-action leve. Ate 600 caracteres\n- facebook: adaptacao da do Instagram, um pouco mais explicativa e com menos\n  dependencia de emoji, ja que o feed do Facebook favorece texto. Ate 800 caracteres\n- linkedin: mais analitica, sem emojis, tom profissional, pode trazer uma\n  implicacao pratica ou de mercado. Ate 1200 caracteres\nA legenda pode convidar a seguir a pagina e citar o iaclube.help, mas nao\nrepita palavra por palavra o texto do slide de CTA.\n\nFORMATO DE SAIDA\nResponda APENAS com um JSON valido, sem nenhum texto antes ou depois, sem\nblocos de codigo markdown. Siga exatamente esta estrutura:\n\n{\n  \"termo\": \"nome do termo em poucas palavras\",\n  \"definicao_curta\": \"1-2 frases explicando o termo de forma simples\",\n  \"slides\": [\n    {\"papel\": \"gancho\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"contexto\", \"titulo\": \"o termo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\", \"prompt_imagem\": \"concrete scene in english, no text, no logos\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\", \"prompt_imagem\": \"concrete scene in english, no text, no logos\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"}\n  ],\n  \"legendas\": {\n    \"instagram\": \"...\",\n    \"facebook\": \"...\",\n    \"linkedin\": \"...\"\n  },\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"tema_card\": \"titulo curto que identifica essa peca de conteudo\"\n}",
+        "text": "=Voce e o redator de conteudo do IAClube, uma pagina educativa sobre inteligencia\nartificial no Instagram, Facebook e LinkedIn.\n\nPERSONALIDADE DA MARCA\n- Tom explicativo e amigavel, como um amigo que entende de IA explicando pra outro\n- Nunca soa academico, arrogante ou robotico\n- Evita jargao sem explicar; quando usa um termo tecnico, explica na hora\n- Publico-alvo: pessoas de 18 a 30 anos, a maioria com conhecimento basico de\n  ferramentas de IA, mas parte do publico ja e intermediario/avancado -- por isso,\n  a explicacao tem que ser simples sem ser rasa: alguem que ja manja tambem\n  precisa achar interessante\n\nSUA TAREFA HOJE\nEscolher UM termo ou conceito de inteligencia artificial que ainda nao foi\nexplicado na pagina, e criar o roteiro de um post \"Dicionario IA\" -- carrossel\nde 6 slides escritos por voce (a automacao adiciona mais um no fim, e cada slide vira um card\nde arte com espaco fixo, por isso os limites de caractere abaixo sao rigidos).\n\nTERMOS JA USADOS (nao repita nenhum destes):\n{{ $json.termos_usados }}\n\nREGRAS DE CONTEUDO\n- Escolha um termo relevante e atual (ex: \"fine-tuning\", \"alucinacao\", \"token\",\n  \"prompt injection\", \"RAG\", \"context window\") -- evite termos obvios demais\n  como \"o que e IA\"\n- A explicacao deve ser 100% baseada no seu conhecimento -- nao e necessario\n  pesquisar, ja que conceitos fundamentais de IA nao mudam de uma semana pra outra\n- Use uma analogia ou exemplo do dia a dia pra tornar o conceito concreto\n- Cada slide deve ter uma ideia so -- nao amontoe informacao\n\nESTRUTURA DO CARROSSEL (obrigatoria)\nCada slide tem um campo \"papel\", e o valor precisa ser exatamente um destes\ntres: \"gancho\", \"contexto\" ou \"desenvolvimento\". A ordem no array e sempre esta:\n\n1. \"gancho\" -- exatamente 1 slide, sempre o primeiro.\n   E a unica coisa que a pessoa ve antes de decidir se para ou continua rolando.\n   Ele NAO explica: ele abre uma tensao que so o resto do carrossel resolve.\n   Escolha uma destas entradas: uma afirmacao contraintuitiva, um erro comum que\n   quase todo mundo comete, uma pergunta que a pessoa nao consegue responder, ou\n   um custo concreto de nao saber aquilo.\n   Nao comece com \"voce sabe o que e X?\", \"hoje vamos falar sobre X\" nem\n   \"X: entenda de uma vez\" -- isso e titulo de aula, nao gancho.\n   O termo pode aparecer, mas a curiosidade nao pode depender de a pessoa ja\n   conhece-lo.\n\n2. \"contexto\" -- exatamente 1 slide, sempre o segundo.\n   Fecha em parte a tensao do gancho e nomeia o assunto. Aqui entra o termo e a\n   primeira nocao do que ele significa, em uma frase. Nao entregue a explicacao\n   inteira: entregue o suficiente para ficar claro que vale continuar.\n\n3. \"desenvolvimento\" -- exatamente 4 slides, na sequencia, ate o fim do array.\n   E onde a explicacao acontece, e a arte tem um card pronto para cada um, nesta ordem:\n   1o: a analogia do dia a dia (este slide ganha uma ilustracao)\n   2o: como funciona por dentro, em termos simples (este slide ganha uma ilustracao)\n   3o: onde a pessoa ja esbarra nisso sem perceber\n   4o: o erro tipico de quem nao entende, ou o que fazer a respeito\n   Uma ideia por slide.\n\nNAO escreva slide de despedida, agradecimento, \"siga a pagina\" ou qualquer\nfechamento. O ultimo slide e um CTA fixo que a automacao adiciona sozinha --\nse voce escrever um, ele vai aparecer duplicado.\n\nCOMO SEGURAR A ATENCAO\n- Cada slide responde a pergunta que o slide anterior abriu e abre uma nova. Se\n  a pessoa puder parar no slide 3 sem sentir que ficou faltando algo, o\n  carrossel esta mal construido\n- Frases curtas. Segunda pessoa (\"voce ja fez isso\") em vez de impessoal\n  (\"e comum que se faca\")\n- No maximo UMA vez no carrossel inteiro voce pode mandar a pessoa arrastar\n  (\"arrasta pro lado\"). Retencao vem de curiosidade, nao de instrucao\n- Numero, exemplo concreto e nome de ferramenta prendem mais que adjetivo\n  (\"mais rapido\", \"muito util\", \"revolucionario\")\n- O slide mais fraco define quanta gente chega no fim: se um slide so repete o\n  anterior com outras palavras, troque por uma ideia nova (sao sempre 4 de desenvolvimento)\n\nLIMITES DE CARACTERE (obrigatorios: o texto vai direto para a arte, e cada card\ntem espaco fixo. Texto maior que o limite sai cortado ou espremido)\n- gancho: titulo_leve + titulo somados, no maximo 22 caracteres; texto ate 87.\n  O gancho e curto de proposito -- texto longo na capa e o jeito mais rapido de\n  perder o leitor\n- contexto: titulo ate 18 caracteres; texto entre 80 e 152\n- desenvolvimento 1: titulo_leve + titulo somados ate 23; texto entre 90 e 175\n- desenvolvimento 2: titulo_leve + titulo somados ate 32; texto entre 90 e 163\n- desenvolvimento 3: titulo_leve + titulo somados ate 26; texto entre 90 e 169\n- desenvolvimento 4: titulo_leve + titulo somados ate 29; texto entre 90 e 152\n- definicao_curta: ate 200 caracteres (nao vai para a arte, e o resumo do card)\n\nOS TITULOS\nEm todo slide, menos no contexto, o titulo vem em duas partes que a arte desenha\ncom pesos diferentes: \"titulo_leve\" (o comeco, em letra fina) e \"titulo\" (o resto,\nem destaque). As duas formam UMA frase so, e o limite de caracteres acima vale para\nas duas somadas. Exemplo: titulo_leve \"A IA pode te\" + titulo \"esquecer.\". Nao termine\no titulo_leve com pontuacao e nao repita palavras entre as duas partes.\nNo contexto o \"titulo\" e so o proprio termo, do jeito que ele aparece na arte,\ncom ate 18 caracteres (use a sigla ou o nome curto se o termo for longo), e nao\nleva \"titulo_leve\".\n\n{{ $('Ler guia de imagem').first().json.corpo.trim() }}\n\nAS TRES LEGENDAS\nO carrossel e o MESMO nas tres redes. A unica coisa que muda e a legenda.\nEscreva as tres descrevendo a mesma peca, sem inventar conteudo diferente:\n- instagram: curta e envolvente, 1-2 emojis, termina com pergunta ou\n  call-to-action leve. Ate 600 caracteres\n- facebook: adaptacao da do Instagram, um pouco mais explicativa e com menos\n  dependencia de emoji, ja que o feed do Facebook favorece texto. Ate 800 caracteres\n- linkedin: mais analitica, sem emojis, tom profissional, pode trazer uma\n  implicacao pratica ou de mercado. Ate 1200 caracteres\nA legenda pode convidar a seguir a pagina e citar o iaclube.help, mas nao\nrepita palavra por palavra o texto do slide de CTA.\n\nFORMATO DE SAIDA\nResponda APENAS com um JSON valido, sem nenhum texto antes ou depois, sem\nblocos de codigo markdown. Siga exatamente esta estrutura:\n\n{\n  \"termo\": \"nome do termo em poucas palavras\",\n  \"definicao_curta\": \"1-2 frases explicando o termo de forma simples\",\n  \"slides\": [\n    {\"papel\": \"gancho\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"contexto\", \"titulo\": \"o termo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\", \"prompt_imagem\": \"concrete scene in english, no text, no logos\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\", \"prompt_imagem\": \"concrete scene in english, no text, no logos\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"},\n    {\"papel\": \"desenvolvimento\", \"titulo_leve\": \"comeco do titulo\", \"titulo\": \"resto do titulo\", \"texto\": \"texto do slide\"}\n  ],\n  \"legendas\": {\n    \"instagram\": \"...\",\n    \"facebook\": \"...\",\n    \"linkedin\": \"...\"\n  },\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"tema_card\": \"titulo curto que identifica essa peca de conteudo\"\n}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -938,7 +938,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/api/v1/saude",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -968,7 +968,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/integracao/producao",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/api/v1/integracao/producao",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -1199,6 +1199,62 @@
         1080,
         1140
       ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/documentos/guia-de-imagem-dicionario",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "dfc10986-8bf9-56fb-ae16-88f515fc9d28",
+      "name": "Ler guia de imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        0
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Confere o guia de imagem lido da pasta de documentos antes de gastar a IA.\nconst cfg = $('Configuração').first().json;\nconst e = $input.first().json;\nconst nome = 'guia-de-imagem-dicionario';\nconst corpo = String(e.corpo || '').trim();\nif (!corpo) throw new Error('O documento «' + nome + '» está vazio: a IA ficaria sem o guia de imagem. Escreva o guia na tela Prompts.');\nif (/\\{\\{|\\}\\}/.test(corpo)) throw new Error('O documento «' + nome + '» tem «{{» ou «}}»: o n8n entenderia como expressão. Tire esses símbolos na tela Prompts.');\nreturn [{ json: cfg }];"
+      },
+      "id": "50981d1f-2775-582a-817e-45470a2bba22",
+      "name": "Validar guia de imagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chega aqui se a ponte não entregou o guia de imagem: o fluxo para antes de mandar um prompt incompleto à IA.\nconst e = $input.first().json;\nconst nome = 'guia-de-imagem-dicionario';\nconst detalhe = e.error\n  ? (e.error.message || JSON.stringify(e.error)) + (e.error.description ? ' — ' + e.error.description : '')\n  : JSON.stringify(e).slice(0, 300);\nthrow new Error('Não foi possível ler o documento «' + nome + '» (o guia de imagem do agente) pela ponte: ' + detalhe\n  + '. Confira se a ponte está no ar e se o arquivo ' + nome + '.md existe na pasta de documentos compartilhada.');"
+      },
+      "id": "120d5ef1-05fd-5d14-82af-1b8691a8ebc8",
+      "name": "Guia de imagem não lido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        80
+      ]
     }
   ],
   "connections": {
@@ -1228,7 +1284,7 @@
       "main": [
         [
           {
-            "node": "Memoria - ler",
+            "node": "Ler guia de imagem",
             "type": "main",
             "index": 0
           }
@@ -1828,6 +1884,35 @@
         [
           {
             "node": "Montar mensagem de falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler guia de imagem": {
+      "main": [
+        [
+          {
+            "node": "Validar guia de imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guia de imagem não lido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar guia de imagem": {
+      "main": [
+        [
+          {
+            "node": "Memoria - ler",
             "type": "main",
             "index": 0
           }

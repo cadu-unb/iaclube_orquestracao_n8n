@@ -51,7 +51,7 @@ Decisões que valem ser revisadas: 12 cards **sem Índice** (o Índice de Notíc
 
 **Testado de verdade**
 - `servidor.sh` com os dois servidores reais: subir, subir de novo (idempotente), consultar, parar, porta liberada.
-- A entrada de exemplo e o pedido de produção montado pelo fluxo, no gerenciador real (`/integracao/validar`): 12 cards, sem erros e sem avisos. Também passando pela ponte.
+- A entrada de exemplo e o pedido de produção montado pelo fluxo, no gerenciador real (`/api/v1/integracao/validar`): 12 cards, sem erros e sem avisos. Também passando pela ponte.
 - A ponte: token obrigatório (401 sem ele), rota não permitida (403), tentativa de sair da pasta `entradas/` (404), servidor fora do ar (502), subir/parar pelo HTTP.
 - O workflow, num simulador simples do n8n (script de teste que **não** está nesta pasta), com a ponte real e servidores de mentira, em quatro cenários: tudo certo, gerador sem motor, imagem que falha, produção que dá erro. Nos de falha, os dois servidores foram desligados e a mensagem saiu certa.
 

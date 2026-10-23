@@ -13,7 +13,9 @@ roda **aqui**, como o seu usuário, e o n8n conversa só com ela, por HTTP:
   GET  /documentos[?tipo=&categoria=&tag=] lista os documentos compartilhados (só leitura)
   GET  /documentos/NOME[.md]               lê um documento: nome, título, tipo, categoria, tags, corpo, hash
   *    /gerador/...                        repassa ao gerador (127.0.0.1:7000)
-  *    /gerenciador/...                    repassa ao gerenciador (127.0.0.1:8000)
+  *    /gerenciador/...                    repassa ao gerenciador (127.0.0.1:8000); só `/api/v1/{saude,integracao/…}`
+                                           (os endereços antigos sem `/api/v1` são traduzidos, para os fluxos
+                                           ainda não atualizados)
 
 Tudo, menos `/saude`, exige o cabeçalho `X-Ponte-Token`. A ponte só executa os dois comandos
 fixos de `servidor.sh`, nas pastas dadas aqui na linha de comando; o n8n não manda comando
@@ -48,8 +50,12 @@ TEMPO_REPASSE_S = 330  # a produção de cards pode levar até ~2 min; sobra fol
 # Só estas rotas de cada servidor passam pela ponte.
 ROTAS_PERMITIDAS = {
     "gerador": re.compile(r"/api/v1/(health|status|jobs(/free)?|jobs/[0-9a-fA-F-]+(/result)?)"),
-    "gerenciador": re.compile(r"/(saude|integracao/(producao|validar|conjuntos|prompt))"),
+    # MVP 1.9.1 (fase 0B/H): a API do gerenciador mora em `/api/v1/`.
+    "gerenciador": re.compile(r"/api/v1/(saude|integracao/(producao|validar|conjuntos|prompt))"),
 }
+# Endereços **antigos** do gerenciador (antes do 1.9.1). Um fluxo do n8n que ainda os use continua funcionando:
+# a ponte os **traduz** para o endereço novo antes de repassar (o gerenciador deixou de aceitá-los na raiz).
+ENDERECOS_ANTIGOS_DO_GERENCIADOR = re.compile(r"/(saude|integracao/(producao|validar|conjuntos|prompt))")
 
 
 # ----------------------------------------------------------------------------- documentos (só leitura)
@@ -328,6 +334,8 @@ class Ponte(BaseHTTPRequestHandler):
 
     def _repassar(self, metodo: str, qual: str, destino: str):
         caminho = urlsplit(destino).path
+        if qual == "gerenciador" and ENDERECOS_ANTIGOS_DO_GERENCIADOR.fullmatch(caminho):
+            destino, caminho = "/api/v1" + destino, "/api/v1" + caminho  # fluxo antigo: traduz para o endereço novo
         if not ROTAS_PERMITIDAS[qual].fullmatch(caminho):
             return self._json(403, _erro("rota_nao_permitida", f"a ponte não repassa {metodo} /{qual}{caminho}"))
         tamanho = int(self.headers.get("Content-Length") or 0)

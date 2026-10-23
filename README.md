@@ -57,7 +57,7 @@ Iniciar → Configuração → lê o arquivo de entrada → valida
   → enfileira as 10 imagens → espera e consulta /api/v1/status até todas ficarem prontas
   → pega o caminho de cada imagem → desliga o gerador
   → sobe o gerenciador (porta 8000) → espera 5 s → confere /saude
-  → POST /integracao/producao (12 cards + 10 imagens) → desliga o gerenciador
+  → POST /api/v1/integracao/producao (12 cards + 10 imagens) → desliga o gerenciador
   → Entregar resultado: { pasta, arquivos, avisos }
 ```
 
@@ -138,7 +138,7 @@ Imprime uma linha de JSON. O servidor sobe em segundo plano, num grupo de proces
 
 **Testado:**
 - `servidor.sh`, de verdade, com os dois servidores reais: subir, subir de novo (idempotente), consultar, parar e conferir que a porta ficou livre.
-- A entrada de exemplo e o pedido de produção montado pelo fluxo, no gerenciador real (`/integracao/validar`): 12 cards, sem erros e sem avisos.
+- A entrada de exemplo e o pedido de produção montado pelo fluxo, no gerenciador real (`/api/v1/integracao/validar`): 12 cards, sem erros e sem avisos.
 - O grafo do workflow, rodado num simulador simples do n8n contra servidores de mentira, em quatro cenários: tudo certo; gerador sem motor configurado; uma imagem que falha; produção que dá erro. Nos três cenários de falha os servidores foram desligados e a mensagem saiu certa.
 
 **Não testado:**

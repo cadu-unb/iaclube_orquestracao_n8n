@@ -553,7 +553,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/saude",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/api/v1/saude",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -583,7 +583,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/integracao/producao",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/gerenciador/api/v1/integracao/producao",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

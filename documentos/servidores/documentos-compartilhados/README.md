@@ -16,61 +16,60 @@ Os documentos ficam em [`prompts/`](prompts/): arquivos `.md` (prompts, glossár
 
 **Versionada aqui:** depois de criar ou editar documentos nas telas, **faça o commit neste repositório** (os programas nunca rodam `git`). As cópias `.bak` e os `.tmp` ficam de fora (`.gitignore`).
 
-Situação: a pasta tem os seis arquivos que a 8000 já trazia, os dois estilos de imagem dos fluxos e os **23 prompts de imagem do catálogo da 7000** (migrados na fase 0A, sem apagar o `prompts.json` de lá).
+Situação: a pasta tem os seis arquivos que a 8000 já trazia, os dois estilos de imagem dos fluxos, os dois **guias de imagem dos agentes** (fase H do 1.9.1) e os **23 prompts de imagem do catálogo da 7000** (migrados na fase 0A, sem apagar o `prompts.json` de lá).
 
 ---
 
 ## Quais arquivos os fluxos do n8n usam de verdade
 
-*(Conferido nos fluxos de `workflows/` e na ponte em 2026-10-22, antes da fase H do MVP 1.9.1.)*
+*(Atualizado em 2026-10-23, fase H do MVP 1.9.1.)*
 
-**Em uma frase:** hoje o n8n lê **só dois** dos 31 arquivos, `estilo-noticias.md` e `estilo-dicionario.md`. Os outros 29 existem para as telas **Prompts** (portas 8000 e 7000) e para você; nenhum fluxo os lê. O resto do que guia a IA nos fluxos (a personalidade da marca, as regras de cada conjunto e o guia da imagem de cada agente) **ainda está escrito dentro dos nós do n8n**: isso muda na fase H (veja o fim desta página).
+**Em uma frase:** o n8n lê **quatro** dos 33 arquivos: os dois **estilos** das imagens (`estilo-noticias.md` e `estilo-dicionario.md`) e os dois **guias de imagem dos agentes** (`guia-de-imagem-noticias.md` e `guia-de-imagem-dicionario.md`). **Você os edita na tela Prompts** (porta 8000 ou 7000) e o **próximo disparo** do fluxo já usa o texto novo, **sem abrir o n8n**. Os outros 29 existem para as telas Prompts e para você; nenhum fluxo os lê. O resto do que guia a IA (a personalidade da marca, as regras de cada conjunto) **ainda está escrito dentro dos nós** do n8n.
 
-| Arquivo(s) | Quem usa de verdade | Quando |
+| Arquivo(s) | Quem usa de verdade | O que é |
 |---|---|---|
-| `estilo-noticias.md` | **n8n**, fluxo Notícias | toda execução com imagens |
-| `estilo-dicionario.md` | **n8n**, fluxo Dicionário | toda execução com imagens |
+| `estilo-noticias.md` | **n8n**, fluxo Notícias | o estilo que se acrescenta ao fim de **toda imagem** (paleta, traço, "sem texto") |
+| `estilo-dicionario.md` | **n8n**, fluxo Dicionário | o mesmo, para o Dicionário |
+| `guia-de-imagem-noticias.md` | **n8n**, fluxo Notícias | **o que a IA lê para escrever a cena de cada imagem** (a seção «A IMAGEM DE CADA NOTICIA» do agente) |
+| `guia-de-imagem-dicionario.md` | **n8n**, fluxo Dicionário | o mesmo, para os dois slides com imagem (a seção «AS IMAGENS» do agente) |
 | os 23 prompts de imagem (`lobo_guara_*`, `passarinho_*`, `teste_*` etc.) | **porta 7000**, campo «Tipo de imagem» | quando você gera uma imagem à mão na 7000 |
 | `como-montar-cards-*.md` (4), `como-montar-arquivos.md`, `prompt-noticias.md` | **você**, pela tela Prompts da 8000 | quando você cola o guia numa IA para montar cards à mão |
 
-### Como o n8n lê um documento (vale para os dois estilos)
+### Como o n8n lê um documento
 
-1. O nó **Configuração** do fluxo guarda o **nome** do documento (`estilo_documento`, sem `.md`). É o único lugar para trocar de estilo.
-2. O nó **Validar entrada** confere o nome (letras, números, hífen e sublinhado, até 64).
-3. O nó **Ler estilo** pede o texto à **ponte** (`GET /documentos/<nome>`, só leitura, com o token da ponte). A ponte lê o arquivo **do disco naquele momento**: o que você salvou na tela Prompts vale na **próxima execução**, sem abrir o n8n e sem reimportar nada.
-4. Só **depois** de o estilo ser lido é que o fluxo sobe o gerador de imagens (a 7000). O nó **Montar pedidos de imagem** pega a cena de cada imagem, escrita pela IA do fluxo (`prompt_imagem`), e acrescenta o estilo no fim: **`cena, estilo`**. O pedido vai ao gerador já com esse texto inteiro.
-5. **Se der errado**, o fluxo para antes de gastar tempo com imagens: arquivo que não existe, ponte fora do ar ou documento vazio viram o comentário de falha no card do Trello, com o nome do arquivo e o motivo. Nada de imagem fora do estilo sai por engano.
+1. O nó **Configuração** do fluxo guarda o **nome** do documento de **estilo** (`estilo_documento`, sem `.md`); o nome do **guia de imagem** é fixo no fluxo (`guia-de-imagem-noticias` ou `guia-de-imagem-dicionario`).
+2. Um nó **Ler …** pede o texto à **ponte** (`GET /documentos/<nome>`, só leitura, com o token da ponte). A ponte lê o arquivo **do disco naquele momento**: o que você salvou vale no **próximo disparo**.
+3. **O guia de imagem é lido logo no começo do fluxo**, antes da IA e antes de qualquer gasto, e o texto entra no prompt do agente **no mesmo lugar** onde antes estava escrito. Com o texto como está, o prompt que o agente recebe é **byte a byte o de antes** (provado por teste).
+4. **O estilo é lido depois de a IA escrever** e **antes de subir o gerador de imagens**: o nó **Montar pedidos de imagem** pega a cena de cada imagem e acrescenta o estilo no fim (**`cena, estilo`**).
+5. **Se der errado**, o fluxo **para** dizendo **qual documento** faltou: arquivo que não existe, ponte fora do ar, documento **vazio** ou com **`{{` ou `}}`** (o n8n entenderia como expressão; **não escreva isso nos guias**). Nada incompleto vai à IA. Nos guias, a falha acontece **antes** de existir o card no Trello (por isso é um erro do fluxo); no estilo, depois do texto pronto (por isso vira o comentário de falha do card, com o JSON para refazer a arte).
 
-**Por que um estilo à parte:** é ele que deixa as imagens de uma mesma edição com a **mesma cara** (paleta, traço, enquadramento, «sem texto, sem logos»). A cena muda a cada notícia; o estilo é igual para todas. Separar os dois permite o designer ajustar o estilo numa tela simples.
+**Por que separar:** o **guia** ensina a IA a descrever bem uma cena (em inglês, simples, sem texto nem marca, sem pessoas reais); o **estilo** é igual para todas as imagens de uma edição, para elas terem a mesma cara. Os dois são o que o designer mais ajusta, e agora estão num lugar simples.
 
 ### Para os cards de Notícias IA (`completo/noticias-completo`, sexta 15h)
 
-Ordem dentro do fluxo:
+1. **Lê `guia-de-imagem-noticias.md`** pela ponte (e confere: não vazio, sem `{{ }}`). Se faltar, o fluxo para.
+2. Lê os feeds RSS, tira o que já foi publicado, a IA escolhe 4 a 6 notícias e escreve cada card **e a cena de cada imagem** (`prompt_imagem`, em inglês), seguindo o guia lido no passo 1. O resto das instruções da IA está no próprio nó **AI Agent - Noticias**.
+3. Cria o card no Trello e grava a memória.
+4. Monta a entrada dos cards: capa, índice (até 6 notícias), um card **com imagem** por notícia e encerramento. O estilo vem da Configuração: **`estilo-noticias`**.
+5. **Lê `estilo-noticias.md`** pela ponte, sobe o gerador, gera **uma imagem por notícia** (`cena, estilo`), desliga o gerador, sobe o gerenciador (8000), monta os cards com as imagens e comenta o resultado no card do Trello.
 
-1. Lê os feeds RSS, tira o que já foi publicado, a IA escolhe 4 a 6 notícias e escreve cada card **e a cena de cada imagem** (`prompt_imagem`, em inglês). *Nenhum documento é lido nesta etapa:* as instruções da IA estão no próprio nó **AI Agent - Noticias**.
-2. Cria o card no Trello e grava a memória.
-3. Monta a entrada dos cards: capa, índice (até 6 notícias), um card **com imagem** por notícia e encerramento. O nome do documento de estilo vem da Configuração: **`estilo-noticias`**.
-4. **Lê `estilo-noticias.md`** pela ponte (passos 1 a 5 acima).
-5. Sobe o gerador, gera **uma imagem por notícia** (`cena, estilo`), desliga o gerador, sobe o gerenciador (8000), monta os cards com as imagens e comenta o resultado no card do Trello.
+Arquivos usados: **`guia-de-imagem-noticias.md`** e **`estilo-noticias.md`** (azul e amarelo quente, formas simples, enquadramento largo, sem texto).
 
-Arquivo usado: **`estilo-noticias.md`** (azul e amarelo quente, formas simples, enquadramento largo, sem texto).
-
-> O fluxo de arte avulso `noticias-2-arte` (gatilho manual) faz o mesmo a partir de um arquivo de `entradas/`. O nome do estilo vem do campo `estilo_documento` desse arquivo (`exemplo-noticias-10.json` usa `estilo-noticias`). Se o campo não existir, o fluxo usa o `estilo_comum` escrito no próprio arquivo, como antes do MVP 1.9.
+> O fluxo de arte avulso `noticias-2-arte` (gatilho manual) faz só a parte das imagens a partir de um arquivo de `entradas/`: o nome do estilo vem do campo `estilo_documento` desse arquivo (`exemplo-noticias-10.json` usa `estilo-noticias`). Ele **não** tem agente de IA, então não lê guia de imagem.
 
 ### Para os cards de Dicionário IA (`completo/dicionario-completo`, segunda 15h)
 
-1. A IA escolhe um termo que a página ainda não explicou e escreve os 7 slides, **dois deles com a cena de uma imagem**. *Nenhum documento é lido nesta etapa* (as instruções estão no nó **AI Agent - Dicionario**).
-2. Cria o card no Trello e grava o termo na memória.
-3. Monta os 7 cards `dict-v1`. O estilo vem da Configuração: **`estilo-dicionario`**.
-4. **Lê `estilo-dicionario.md`** pela ponte e continua como nas Notícias: gera **2 imagens** (`cena, estilo`) e monta os cards.
+1. **Lê `guia-de-imagem-dicionario.md`** pela ponte (e confere), no começo.
+2. A IA escolhe um termo que a página ainda não explicou e escreve os 7 slides, **dois deles com a cena de uma imagem**, seguindo o guia.
+3. Cria o card no Trello e grava o termo na memória.
+4. Monta os 7 cards `dict-v1`. O estilo vem da Configuração: **`estilo-dicionario`**.
+5. **Lê `estilo-dicionario.md`** e continua como nas Notícias: gera **2 imagens** (`cena, estilo`) e monta os cards.
 
-Arquivo usado: **`estilo-dicionario.md`** (vermelho-alaranjado e azul-marinho sobre fundo off-white, formas simples, sem texto).
+Arquivos usados: **`guia-de-imagem-dicionario.md`** e **`estilo-dicionario.md`** (vermelho-alaranjado e azul-marinho sobre fundo off-white, formas simples, sem texto).
 
 ### Para os cards de «Mão na massa» (`completo/hands_on-completo`, quarta 15h)
 
-**Nenhum arquivo desta pasta.** Hoje esse fluxo não gera imagens: não sobe o gerador, não pede nenhum documento à ponte e só produz os cards no gerenciador. (O catálogo **permite** card com imagem no Mão na massa, o modelo `texto-com-imagem`; é o fluxo que ainda não o usa. Está no `A-FAZER.md`, item 2.) O texto é escrito pela IA com as instruções que estão dentro do nó **AI Agent - Mao na Massa**.
-
-O arquivo `como-montar-cards-hands-on.md` existe para a tela Prompts da 8000, mas **o fluxo não o lê**.
+**Nenhum arquivo desta pasta.** Hoje esse fluxo não gera imagens: não sobe o gerador, não pede nenhum documento à ponte e só produz os cards no gerenciador. (O catálogo **permite** card com imagem no Mão na massa, o modelo `texto-com-imagem`; é o fluxo que ainda não o usa. Está no `A-FAZER.md`, item 2.) O arquivo `como-montar-cards-hands-on.md` existe para a tela Prompts da 8000, mas **o fluxo não o lê**.
 
 ### Para as imagens geradas à mão na porta 7000
 
@@ -79,7 +78,3 @@ Os **23 prompts de imagem** (um por assunto e estilo, mais os testes `teste_16x1
 ### Para montar cards à mão (tela Prompts da 8000)
 
 `como-montar-cards-news.md`, `como-montar-cards-dict-v1.md`, `como-montar-cards-dict-v2.md`, `como-montar-cards-hands-on.md`, `prompt-noticias.md` e `como-montar-arquivos.md` são **guias para você colar numa IA** (ou ler) quando monta cards sem o n8n. São textos **separados** dos que os agentes do n8n usam: mudar um deles **não muda** o que o fluxo faz.
-
-### O que ainda mora dentro do n8n (e muda na fase H)
-
-Os agentes dos três fluxos têm todo o seu prompt escrito dentro do nó, **inclusive a parte que ensina a IA a escrever a cena de cada imagem** («A IMAGEM DE CADA NOTICIA» nas Notícias e «AS IMAGENS» no Dicionário). Hoje, para o designer mudar esse guia, é preciso abrir o n8n. A **fase H** do MVP 1.9.1 do `iaclube_n8n` move esse trecho para dois documentos desta pasta (`guia-de-imagem-noticias.md` e `guia-de-imagem-dicionario.md`) lidos pela ponte do mesmo jeito que os estilos; quando isso acontecer, esta página será atualizada. Detalhes em `A-FAZER.md`, item 2b.

@@ -75,40 +75,22 @@ O caminho do arquivo aparece no comentário que o fluxo deixa no card do Trello 
 
 **Exige o gerenciador atualizado.** A opção `exportacao.instrucoes` foi acrescentada ao `iaclube_n8n` em 20/10/2026 (antes a API não a aceitava: o pedido dava `422 pedido_invalido`). Se o gerenciador estiver de pé desde antes disso, reinicie-o; os fluxos o sobem e o desligam a cada execução, então basta rodar de novo.
 
-## O estilo das imagens: um documento (MVP 1.9)
+## O que o designer edita sem abrir o n8n: o estilo e o guia de imagem (MVP 1.9 e 1.9.1)
 
-O texto que se acrescenta ao fim de todo prompt de imagem (o `estilo_comum` de antes) agora é um **documento** da pasta de documentos compartilhada com as portas 8000 e 7000: `estilo-noticias.md` e `estilo-dicionario.md`, em `documentos/servidores/documentos-compartilhados/prompts/`. Nos três fluxos de arte, o nó **Ler estilo** busca o texto pela ponte (`GET /documentos/<nome>`, só leitura, com o mesmo token) e o **Montar pedidos de imagem** o usa; o prompt final continua `cena, estilo`, **idêntico** ao de antes.
+Dois tipos de documento da pasta compartilhada com as portas 8000 e 7000 (`documentos/servidores/documentos-compartilhados/prompts/`) guiam a geração de imagem, e **os dois se editam na tela Prompts**; o disparo seguinte do fluxo já usa o texto novo, **sem abrir o n8n e sem reimportar nada**:
 
-- **Configuração** (`noticias-completo` e `dicionario-completo`): `estilo_documento: 'estilo-noticias'` (ou `'estilo-dicionario'`). Para trocar o estilo, troque o **texto do documento** (pela tela Prompts ou no arquivo), não o fluxo.
-- **`noticias-2-arte`:** o arquivo de `entradas/` traz `estilo_documento` no lugar de `estilo_comum`. Um arquivo antigo, com `estilo_comum` (o texto), continua valendo; os dois juntos dão erro de validação.
-- **Se a ponte não conseguir ler o documento** (ponte desligada, documento inexistente, nome errado, pasta ausente), o fluxo **para antes de subir o gerador**, com uma mensagem que diz qual documento (`Não foi possível ler o documento de estilo «…»`). Não existe texto de reserva escondido.
-- A ponte aponta para a pasta compartilhada por padrão; outra pasta: `python3 scripts/ponte.py --pasta-documentos /caminho`. Reinicie a ponte depois de atualizar o `ponte.py`.
+| Documento | Fluxo | O que é |
+|---|---|---|
+| `guia-de-imagem-noticias.md` | Notícias (`completo/noticias-completo`) | o que a **IA lê para escrever a cena** de cada imagem (`prompt_imagem`): em inglês, cena simples, sem texto nem marca, sem pessoas reais |
+| `guia-de-imagem-dicionario.md` | Dicionário (`completo/dicionario-completo`) | o mesmo, para os dois slides com imagem |
+| `estilo-noticias.md` | Notícias (e a arte avulsa) | o **estilo** acrescentado ao fim de toda imagem (paleta, traço, "sem texto") |
+| `estilo-dicionario.md` | Dicionário | o mesmo, para o Dicionário |
 
-## Onde fica o token da ponte
+- **O guia é lido no começo do fluxo.** O nó **Ler guia de imagem** busca o documento pela ponte (`GET /documentos/<nome>`, só leitura, com o mesmo token); o **Validar guia de imagem** confere que ele **não está vazio** e **não tem `{{` nem `}}`** (o n8n entenderia como expressão); e o prompt do agente traz, no lugar onde a seção estava escrita, `{{ $('Ler guia de imagem').first().json.corpo.trim() }}`. Com o texto como está, o prompt do agente é **idêntico byte a byte** ao de antes. **Se algo falhar** (ponte fora do ar, arquivo ausente, vazio, com `{{ }}`), o fluxo **para antes de gastar a IA** e diz **qual documento** (nó **Guia de imagem não lido** ou o erro do **Validar guia de imagem**).
+- **O estilo** continua sendo lido pelo nó **Ler estilo**, depois do texto pronto: o **Montar pedidos de imagem** acrescenta o estilo no fim da cena (`cena, estilo`); o prompt final continua idêntico ao de antes.
+- **O fluxo Hands on não tem imagens**: não usa nenhum desses documentos.
+- **Onde editar:** abra `/prompts` na porta 8000 (ou 7000), procure `guia-de-imagem-…` ou `estilo-…` (tag **n8n**), edite e salve. Faça o **commit** neste repositório depois (os programas nunca rodam `git`).
 
-Os fluxos que geram arte (`noticias-2-arte` e os três `completo`) falam com a ponte e mandam o token em todo pedido. Ele está **num lugar só por fluxo**: o nó **Configuração**, na **linha 7** do código dele:
+## Endereços do gerenciador (MVP 1.9.1)
 
-```js
-  token_ponte: 'COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA',
-```
-
-**Para trocar, no n8n (jeito normal):** abra o fluxo → clique duas vezes no nó **Configuração** → na linha 7, troque só o texto entre as aspas simples → salve. Faça isso em cada fluxo de arte que você usa.
-
-**Se preferir editar o arquivo `.json`:** o código do nó é uma string de uma linha só, então o token não está numa linha própria. Procure por `token_ponte:` (ou vá à linha do `"jsCode"` do nó Configuração: 49 no `noticias-2-arte`, 89 no `noticias-completo` e no `dicionario-completo`, 88 no `hands_on-completo`). Depois importe o arquivo de novo no n8n.
-
-**De onde vem o token:** a ponte mostra o token ao subir (`Token (cabeçalho X-Ponte-Token): ...`) e o guarda em `~/.config/iaclube-orquestracao/ponte.token`. Ele só muda se esse arquivo for apagado ou se a ponte subir com `--token` ou com a variável `IACLUBE_PONTE_TOKEN`. Se o fluxo falhar com `401` / `nao_autorizado`, o token do nó não confere com o da ponte.
-
-**Cuidado com o repositório:** trocar o token no n8n **não** altera os arquivos desta pasta. Se você exportar o fluxo de novo do n8n para cá, o token novo vai junto para o arquivo; tire-o (volte ao texto `COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA`) antes de commitar ou publicar.
-
-## A marca dos cards
-
-O texto do cabeçalho dos cards vem de `marca` no nó **Configuração** (os três `completo`) ou de `entrada.marca` no arquivo de `entradas/` (`noticias-2-arte`). O padrão é `@iaclube.help` (antes `@iaclube`). Exige o gerenciador que aceita essa marca (acrescentada ao `iaclube_n8n` em 20/10/2026); com um gerenciador mais antigo o pedido dá `422 entrada_invalida`. Os textos dos encerramentos ("…toda semana no @iaclube…") não mudaram.
-
-## Notas
-
-1. **`noticias-2-arte` (antes `noticias-10-cards`).** Foi montado por Claude na sessão de **18/10/2026**, no outro usuário do computador (`yuri-santos`), conforme o [RELATORIO.md](../RELATORIO.md). A hora exata em que foi criado lá **não dá para saber**. O que existe é a hora em que chegou a esta pasta: todos os arquivos do repositório (este fluxo, `entradas/`, `scripts/`) têm o mesmo instante, 12:19:11, então vieram juntos numa cópia. O primeiro commit (`begin`, 12:35) é só a foto desse estado inicial.
-2. **`noticias-1-texto` (antes `texto-de-noticias.json`)**, **`dicionario-v1`** e **`hands_on-v1`** são exportações do **seu** n8n: o `instanceId`, as credenciais (Anthropic, OpenAI, Trello; no Hands on também a busca na web, `Header Auth account`) e as Data Tables são do seu ambiente. Claude **não escreveu** esses fluxos. No `noticias-1-texto`, em 19/10 às ~17:53, só **renomeou** o arquivo e **acrescentou o campo `name`** (o export não trazia nome). O `dicionario-v1` foi alterado às ~14:05 e o `hands_on-v1` às ~15:10, depois de entrarem na pasta; não sei por quem nem o quê, e Claude não mexeu neles.
-3. **Os três `completo` foram criados por Claude** a partir da peça de texto do conjunto (a sua) e dos nós de arte do primeiro `completo`: `noticias-completo` em 19/10 (~17:49), `dicionario-completo` em 20/10 (~14:11) e `hands_on-completo` em 20/10 (~15:13). Em cada um, o que mudou no prompt da IA foram os limites de caracteres (agora os dos cards do gerenciador, bem menores), o `prompt_imagem` (onde há imagem) e, no Hands on, a função dos dois últimos slides de desenvolvimento; o resto do texto do prompt é o seu. Os nós de código foram testados numa simulação com dados de mentira, e os pedidos gerados foram produzidos de verdade num gerenciador local (cards desenhados no Chromium, sem avisos). **Nenhum foi importado nem rodado no n8n de verdade.**
-4. **A pasta `completo/`** foi criada por você em 20/10 (~15:09): os arquivos `noticias-completo` e `dicionario-completo` foram movidos de `workflows/` para ela (o conteúdo não mudou). Claude criou o `hands_on-completo` já dentro dela.
-5. **Autor do commit.** O git mostra `cadu-unb_linux` em todos os commits porque foi a conta que commitou; não indica quem escreveu cada fluxo.
-6. **Tokens no histórico.** `noticias-2-arte` e `noticias-completo` trazem o token da ponte escrito no nó **Configuração** (já no histórico do git); tire-o antes de publicar o repositório. `dicionario-completo` e `hands_on-completo` vêm com o token em branco (`COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA`) e ele precisa ser colado ao importar.
+A API do gerenciador (porta 8000) mora em **`/api/v1/`**. Os fluxos chamam, pela ponte, `/gerenciador/api/v1/saude` e `/gerenciador/api/v1/integracao/producao`. A ponte **aceita só** os endereços `/api/v1/{saude,integracao/{producao,validar,conjuntos,prompt}}` do gerenciador e **traduz os antigos** (`/gerenciador/saude`, `/gerenciador/integracao/…`) para os novos, então um fluxo que você ainda não reimportou **continua funcionando**; o gerenciador não aceita mais os antigos na raiz (`/saude` fica, só para o Docker).
