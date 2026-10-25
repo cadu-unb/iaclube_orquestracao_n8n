@@ -1,6 +1,7 @@
 ---
 titulo: Guia de imagem das notícias (lido pelo n8n)
 tipo: prompt
+categoria: guia-de-imagem
 tags: [n8n, imagem]
 origem: outro
 ---

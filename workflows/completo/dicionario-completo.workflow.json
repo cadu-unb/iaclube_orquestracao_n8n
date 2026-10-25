@@ -461,7 +461,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma o Dicionario que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_documento, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Adiciona slide de CTA': o que esta no card do Trello e o que\n// vai para a arte. Cada slide vira um card do dict-v1, sempre nesta ordem:\n//   gancho -> capa | contexto -> definicao | desenvolvimento 1..4 -> texto-com-imagem-1,\n//   texto-com-imagem-2, texto, texto-com-inicio-fino | cta -> encerramento\n// Os marcadores de peso ({leve|...}, {normal|...}, **...**) reproduzem os titulos dos cards originais.\nconst cfg = $('Configuração').first().json;\nconst d = $('Adiciona slide de CTA').first().json;\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\nconst termo = umaLinha(d.termo);\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[̀-ͯ]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\nconst negrito = (texto, trecho) => (trecho ? String(texto).split(trecho).join('**' + trecho + '**') : texto);\n\nconst gancho = doPapel('gancho')[0] || { titulo_leve: '', titulo: termo, texto: '' };\nconst contexto = doPapel('contexto')[0] || { titulo: termo, texto: '' };\nconst cta = doPapel('cta')[0] || { titulo: '', texto: '' };\nconst avisos_ponte = [];\n\n// Quantos slides de desenvolvimento: 4 e o normal (um por card). Com menos, usa os modelos\n// da tabela (os dois com imagem primeiro); com mais, os que sobram ficam de fora.\nconst MODELOS = {\n  2: ['texto-com-imagem-1', 'texto'],\n  3: ['texto-com-imagem-1', 'texto-com-imagem-2', 'texto'],\n  4: ['texto-com-imagem-1', 'texto-com-imagem-2', 'texto', 'texto-com-inicio-fino'],\n};\nlet desenvolvimento = doPapel('desenvolvimento');\nif (desenvolvimento.length > 4) {\n  avisos_ponte.push(desenvolvimento.length + ' slides de desenvolvimento: só os 4 primeiros viraram card');\n  desenvolvimento = desenvolvimento.slice(0, 4);\n}\nconst modelos = MODELOS[desenvolvimento.length] || MODELOS[2].slice(0, desenvolvimento.length);\nif (desenvolvimento.length < 4) avisos_ponte.push('só ' + desenvolvimento.length + ' slides de desenvolvimento: o carrossel saiu com menos cards que o normal (7)');\n\nconst cards = [];\nconst imagens = [];\n\n// capa: começo fino, quebra de linha, resto em destaque ('{leve|A IA pode te}\\nesquecer.')\ncards.push({ modelo: 'capa', campos: {\n  titulo: gancho.titulo_leve ? '{leve|' + umaLinha(gancho.titulo_leve) + '}\\n' + umaLinha(gancho.titulo) : umaLinha(gancho.titulo),\n  corpo: umaLinha(gancho.texto),\n} });\n\n// definicao: 'Isso é' + o termo + a explicação\ncards.push({ modelo: 'definicao', campos: {\n  antetitulo: 'Isso é',\n  titulo: umaLinha(contexto.titulo) || termo,\n  corpo: umaLinha(contexto.texto),\n} });\n\ndesenvolvimento.forEach((s, i) => {\n  const modelo = modelos[i];\n  const leve = umaLinha(s.titulo_leve);\n  const resto = umaLinha(s.titulo);\n  let titulo;\n  if (modelo === 'texto-com-inicio-fino') titulo = leve ? '{normal|' + leve + '} ' + resto : resto;\n  else if (modelo === 'texto') titulo = [leve, resto].filter(Boolean).join(' ');\n  else titulo = leve ? leve + ' **' + resto + '**' : '**' + resto + '**';   // texto-com-imagem-1 e -2\n  cards.push({ modelo, campos: { titulo, corpo: umaLinha(s.texto) } });\n\n  if (modelo.startsWith('texto-com-imagem')) {\n    imagens.push({\n      card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n      mascara: 'imagem_1',\n      nome_arquivo: 'dicionario-' + (slug(termo) || 'termo') + '-' + (imagens.length + 1),\n      prompt: umaLinha(s.prompt_imagem) ||\n        'a simple friendly editorial illustration that explains the artificial intelligence concept: ' + termo,\n    });\n  }\n});\n\n// encerramento: o CTA fixo do nó 'Adiciona slide de CTA', com o termo e o perfil em negrito\ncards.push({ modelo: 'encerramento', campos: {\n  titulo: umaLinha(cta.titulo).replace(/^(\\S+ \\S+) (\\S+)$/, '$1\\n$2'),\n  corpo: negrito(negrito(umaLinha(cta.texto), termo), '@iaclube'),\n} });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  tipo: cfg.tipo || 'dicionario',\n  nome: ('Dicionário IA ' + data + ' ' + termo).trim().slice(0, 80),\n  estilo_documento: cfg.estilo_documento || '',\n  entrada: { serie: cfg.serie, data, assunto: termo, marca: cfg.marca, cards },\n  imagens,\n  avisos_ponte,\n} }];\n"
+        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma o Dicionario que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_documento, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Adiciona slide de CTA': o que esta no card do Trello e o que\n// vai para a arte. Cada slide vira um card do dict-v1, sempre nesta ordem:\n//   gancho -> capa | contexto -> definicao | desenvolvimento 1..4 -> texto-com-imagem-1,\n//   texto-com-imagem-2, texto, texto-com-inicio-fino | cta -> encerramento\n// Os marcadores de peso ({leve|...}, {normal|...}, **...**) reproduzem os titulos dos cards originais.\nconst cfg = $('Configuração').first().json;\n// O texto de reserva da cena (usado só quando a IA não escreve a cena de uma imagem) mora num documento da pasta compartilhada.\nconst reserva = String($('Ler prompt de reserva').first().json.corpo || '').trim();\nconst d = $('Adiciona slide de CTA').first().json;\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\nconst termo = umaLinha(d.termo);\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[̀-ͯ]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\nconst negrito = (texto, trecho) => (trecho ? String(texto).split(trecho).join('**' + trecho + '**') : texto);\n\nconst gancho = doPapel('gancho')[0] || { titulo_leve: '', titulo: termo, texto: '' };\nconst contexto = doPapel('contexto')[0] || { titulo: termo, texto: '' };\nconst cta = doPapel('cta')[0] || { titulo: '', texto: '' };\nconst avisos_ponte = [];\n\n// Quantos slides de desenvolvimento: 4 e o normal (um por card). Com menos, usa os modelos\n// da tabela (os dois com imagem primeiro); com mais, os que sobram ficam de fora.\nconst MODELOS = {\n  2: ['texto-com-imagem-1', 'texto'],\n  3: ['texto-com-imagem-1', 'texto-com-imagem-2', 'texto'],\n  4: ['texto-com-imagem-1', 'texto-com-imagem-2', 'texto', 'texto-com-inicio-fino'],\n};\nlet desenvolvimento = doPapel('desenvolvimento');\nif (desenvolvimento.length > 4) {\n  avisos_ponte.push(desenvolvimento.length + ' slides de desenvolvimento: só os 4 primeiros viraram card');\n  desenvolvimento = desenvolvimento.slice(0, 4);\n}\nconst modelos = MODELOS[desenvolvimento.length] || MODELOS[2].slice(0, desenvolvimento.length);\nif (desenvolvimento.length < 4) avisos_ponte.push('só ' + desenvolvimento.length + ' slides de desenvolvimento: o carrossel saiu com menos cards que o normal (7)');\n\nconst cards = [];\nconst imagens = [];\n\n// capa: começo fino, quebra de linha, resto em destaque ('{leve|A IA pode te}\\nesquecer.')\ncards.push({ modelo: 'capa', campos: {\n  titulo: gancho.titulo_leve ? '{leve|' + umaLinha(gancho.titulo_leve) + '}\\n' + umaLinha(gancho.titulo) : umaLinha(gancho.titulo),\n  corpo: umaLinha(gancho.texto),\n} });\n\n// definicao: 'Isso é' + o termo + a explicação\ncards.push({ modelo: 'definicao', campos: {\n  antetitulo: 'Isso é',\n  titulo: umaLinha(contexto.titulo) || termo,\n  corpo: umaLinha(contexto.texto),\n} });\n\ndesenvolvimento.forEach((s, i) => {\n  const modelo = modelos[i];\n  const leve = umaLinha(s.titulo_leve);\n  const resto = umaLinha(s.titulo);\n  let titulo;\n  if (modelo === 'texto-com-inicio-fino') titulo = leve ? '{normal|' + leve + '} ' + resto : resto;\n  else if (modelo === 'texto') titulo = [leve, resto].filter(Boolean).join(' ');\n  else titulo = leve ? leve + ' **' + resto + '**' : '**' + resto + '**';   // texto-com-imagem-1 e -2\n  cards.push({ modelo, campos: { titulo, corpo: umaLinha(s.texto) } });\n\n  if (modelo.startsWith('texto-com-imagem')) {\n    imagens.push({\n      card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n      mascara: 'imagem_1',\n      nome_arquivo: 'dicionario-' + (slug(termo) || 'termo') + '-' + (imagens.length + 1),\n      prompt: umaLinha(s.prompt_imagem) ||\n        reserva + ' ' + termo,\n    });\n  }\n});\n\n// encerramento: o CTA fixo do nó 'Adiciona slide de CTA', com o termo e o perfil em negrito\ncards.push({ modelo: 'encerramento', campos: {\n  titulo: umaLinha(cta.titulo).replace(/^(\\S+ \\S+) (\\S+)$/, '$1\\n$2'),\n  corpo: negrito(negrito(umaLinha(cta.texto), termo), '@iaclube'),\n} });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  tipo: cfg.tipo || 'dicionario',\n  nome: ('Dicionário IA ' + data + ' ' + termo).trim().slice(0, 80),\n  estilo_documento: cfg.estilo_documento || '',\n  entrada: { serie: cfg.serie, data, assunto: termo, marca: cfg.marca, cards },\n  imagens,\n  avisos_ponte,\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1255,6 +1255,62 @@
         260,
         80
       ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/documentos/prompt-de-reserva-dicionario",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "eb7b2ab4-4fb1-5191-8f6a-6420ced8b6de",
+      "name": "Ler prompt de reserva",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        -160
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Confere o prompt de reserva das imagens lido da pasta de documentos: ele só é usado quando a IA não escreve a cena de uma imagem.\nconst cfg = $('Configuração').first().json;\nconst e = $input.first().json;\nconst nome = 'prompt-de-reserva-dicionario';\nconst corpo = String(e.corpo || '').trim();\nif (!corpo) throw new Error('O documento «' + nome + '» está vazio: uma imagem sem cena da IA ficaria sem prompt. Escreva o texto na tela Prompts.');\nif (/\\{\\{|\\}\\}/.test(corpo)) throw new Error('O documento «' + nome + '» tem «{{» ou «}}»: o n8n entenderia como expressão. Tire esses símbolos na tela Prompts.');\nreturn [{ json: cfg }];"
+      },
+      "id": "a9661ae3-82f5-5ad0-8ab9-fc63e02ef6d8",
+      "name": "Validar prompt de reserva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chega aqui se a ponte não entregou o prompt de reserva: o fluxo para antes de gastar a IA.\nconst e = $input.first().json;\nconst nome = 'prompt-de-reserva-dicionario';\nconst detalhe = e.error\n  ? (e.error.message || JSON.stringify(e.error)) + (e.error.description ? ' — ' + e.error.description : '')\n  : JSON.stringify(e).slice(0, 300);\nthrow new Error('Não foi possível ler o documento «' + nome + '» (o prompt de reserva das imagens) pela ponte: ' + detalhe\n  + '. Confira se a ponte está no ar e se o arquivo ' + nome + '.md existe na pasta de documentos compartilhada.');"
+      },
+      "id": "bb99eeb3-ebb2-5cca-b372-6042789b1add",
+      "name": "Prompt de reserva não lido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -80
+      ]
     }
   ],
   "connections": {
@@ -1909,6 +1965,35 @@
       ]
     },
     "Validar guia de imagem": {
+      "main": [
+        [
+          {
+            "node": "Ler prompt de reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler prompt de reserva": {
+      "main": [
+        [
+          {
+            "node": "Validar prompt de reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prompt de reserva não lido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar prompt de reserva": {
       "main": [
         [
           {

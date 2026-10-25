@@ -2,7 +2,7 @@
 titulo: Retrato de gato
 tipo: imagem
 categoria: assunto
-tags: []
+tags: [imagem]
 versao: 1
 largura: 768
 altura: 768

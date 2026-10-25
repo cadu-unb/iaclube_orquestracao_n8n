@@ -2,7 +2,7 @@
 titulo: Ilustração para artigo
 tipo: imagem
 categoria: finalidade
-tags: []
+tags: [imagem]
 versao: 1
 largura: 944
 altura: 624

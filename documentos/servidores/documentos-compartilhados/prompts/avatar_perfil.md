@@ -2,7 +2,7 @@
 titulo: Foto de perfil (avatar)
 tipo: imagem
 categoria: finalidade
-tags: []
+tags: [imagem]
 versao: 1
 largura: 512
 altura: 512

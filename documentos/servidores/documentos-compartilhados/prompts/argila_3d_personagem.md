@@ -2,7 +2,7 @@
 titulo: Personagem — argila 3D
 tipo: imagem
 categoria: estilo
-tags: []
+tags: [imagem]
 versao: 1
 largura: 768
 altura: 768

@@ -2,7 +2,7 @@
 titulo: Vila à noite — pixel art
 tipo: imagem
 categoria: estilo
-tags: []
+tags: [imagem]
 versao: 1
 largura: 512
 altura: 512

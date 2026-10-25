@@ -2,7 +2,7 @@
 titulo: Lobo-guará — risografia
 tipo: imagem
 categoria: assunto
-tags: []
+tags: [imagem]
 versao: 1
 largura: 1280
 altura: 720

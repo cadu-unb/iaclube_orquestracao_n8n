@@ -2,7 +2,7 @@
 titulo: Capa de apresentação
 tipo: imagem
 categoria: finalidade
-tags: []
+tags: [imagem]
 versao: 1
 largura: 1024
 altura: 576

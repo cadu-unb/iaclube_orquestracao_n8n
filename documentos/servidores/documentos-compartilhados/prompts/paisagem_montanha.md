@@ -2,7 +2,7 @@
 titulo: Montanhas ao amanhecer
 tipo: imagem
 categoria: assunto
-tags: []
+tags: [imagem]
 versao: 1
 largura: 1024
 altura: 576

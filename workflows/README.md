@@ -75,7 +75,7 @@ O caminho do arquivo aparece no comentário que o fluxo deixa no card do Trello 
 
 **Exige o gerenciador atualizado.** A opção `exportacao.instrucoes` foi acrescentada ao `iaclube_n8n` em 20/10/2026 (antes a API não a aceitava: o pedido dava `422 pedido_invalido`). Se o gerenciador estiver de pé desde antes disso, reinicie-o; os fluxos o sobem e o desligam a cada execução, então basta rodar de novo.
 
-## O que o designer edita sem abrir o n8n: o estilo e o guia de imagem (MVP 1.9 e 1.9.1)
+## O que o designer edita sem abrir o n8n: o estilo, o guia de imagem e o prompt de reserva (MVP 1.9, 1.9.1 e 1.9.2)
 
 Dois tipos de documento da pasta compartilhada com as portas 8000 e 7000 (`documentos/servidores/documentos-compartilhados/prompts/`) guiam a geração de imagem, e **os dois se editam na tela Prompts**; o disparo seguinte do fluxo já usa o texto novo, **sem abrir o n8n e sem reimportar nada**:
 
@@ -83,13 +83,16 @@ Dois tipos de documento da pasta compartilhada com as portas 8000 e 7000 (`docum
 |---|---|---|
 | `guia-de-imagem-noticias.md` | Notícias (`completo/noticias-completo`) | o que a **IA lê para escrever a cena** de cada imagem (`prompt_imagem`): em inglês, cena simples, sem texto nem marca, sem pessoas reais |
 | `guia-de-imagem-dicionario.md` | Dicionário (`completo/dicionario-completo`) | o mesmo, para os dois slides com imagem |
+| `prompt-de-reserva-noticias.md` | Notícias | o começo da cena de uma imagem **quando a IA não escreveu a cena** (`prompt_imagem` vazio); o rótulo da notícia vem depois |
+| `prompt-de-reserva-dicionario.md` | Dicionário | o mesmo, para o Dicionário (o termo vem depois) |
 | `estilo-noticias.md` | Notícias (e a arte avulsa) | o **estilo** acrescentado ao fim de toda imagem (paleta, traço, "sem texto") |
 | `estilo-dicionario.md` | Dicionário | o mesmo, para o Dicionário |
 
 - **O guia é lido no começo do fluxo.** O nó **Ler guia de imagem** busca o documento pela ponte (`GET /documentos/<nome>`, só leitura, com o mesmo token); o **Validar guia de imagem** confere que ele **não está vazio** e **não tem `{{` nem `}}`** (o n8n entenderia como expressão); e o prompt do agente traz, no lugar onde a seção estava escrita, `{{ $('Ler guia de imagem').first().json.corpo.trim() }}`. Com o texto como está, o prompt do agente é **idêntico byte a byte** ao de antes. **Se algo falhar** (ponte fora do ar, arquivo ausente, vazio, com `{{ }}`), o fluxo **para antes de gastar a IA** e diz **qual documento** (nó **Guia de imagem não lido** ou o erro do **Validar guia de imagem**).
+- **O prompt de reserva (1.9.2)** é lido logo depois do guia, pelo nó **Ler prompt de reserva** (conferido pelo **Validar prompt de reserva**, com a mesma falha clara: o nó **Prompt de reserva não lido** diz qual documento). O nó **Montar entrada dos cards** o usa **só** quando uma imagem fica sem cena da IA: antes o texto estava escrito dentro do nó; o prompt final é **idêntico byte a byte** ao de antes (provado por teste).
 - **O estilo** continua sendo lido pelo nó **Ler estilo**, depois do texto pronto: o **Montar pedidos de imagem** acrescenta o estilo no fim da cena (`cena, estilo`); o prompt final continua idêntico ao de antes.
 - **O fluxo Hands on não tem imagens**: não usa nenhum desses documentos.
-- **Onde editar:** abra `/prompts` na porta 8000 (ou 7000), procure `guia-de-imagem-…` ou `estilo-…` (tag **n8n**), edite e salve. Faça o **commit** neste repositório depois (os programas nunca rodam `git`).
+- **Onde editar:** abra `/prompts` na porta 8000 (ou 7000), procure `guia-de-imagem-…`, `prompt-de-reserva-…` ou `estilo-…` (tag **n8n**; ou filtre pela tag **Imagem** para ver tudo o que guia imagem), edite e salve. Faça o **commit** neste repositório depois (os programas nunca rodam `git`).
 
 ## Endereços do gerenciador (MVP 1.9.1)
 

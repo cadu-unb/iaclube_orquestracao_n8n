@@ -2,7 +2,7 @@
 titulo: Passarinho — risografia
 tipo: imagem
 categoria: estilo
-tags: []
+tags: [imagem]
 versao: 1
 largura: 1280
 altura: 720

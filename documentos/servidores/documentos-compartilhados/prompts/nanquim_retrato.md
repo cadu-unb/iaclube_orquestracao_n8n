@@ -2,7 +2,7 @@
 titulo: Retrato — nanquim
 tipo: imagem
 categoria: estilo
-tags: []
+tags: [imagem]
 versao: 1
 largura: 624
 altura: 944

@@ -1,6 +1,7 @@
 ---
 titulo: Guia de imagem do dicionário (lido pelo n8n)
 tipo: prompt
+categoria: guia-de-imagem
 tags: [n8n, imagem]
 origem: outro
 ---

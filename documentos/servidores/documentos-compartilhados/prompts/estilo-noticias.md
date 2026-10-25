@@ -2,7 +2,7 @@
 titulo: Estilo das imagens: Notícias IA
 tipo: imagem
 categoria: estilo
-tags: [noticias]
+tags: [noticias, imagem]
 uso: sufixo
 origem: 7000
 ---

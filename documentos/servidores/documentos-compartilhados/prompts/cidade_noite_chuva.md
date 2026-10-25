@@ -2,7 +2,7 @@
 titulo: Cidade na chuva à noite
 tipo: imagem
 categoria: assunto
-tags: []
+tags: [imagem]
 versao: 1
 largura: 1024
 altura: 576

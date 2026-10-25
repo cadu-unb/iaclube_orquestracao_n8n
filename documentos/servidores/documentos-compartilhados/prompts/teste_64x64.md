@@ -2,7 +2,7 @@
 titulo: Teste rápido
 tipo: imagem
 categoria: teste-rapido
-tags: []
+tags: [imagem]
 versao: 1
 largura: 64
 altura: 64

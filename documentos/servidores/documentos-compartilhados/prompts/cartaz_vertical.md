@@ -2,7 +2,7 @@
 titulo: Cartaz vertical
 tipo: imagem
 categoria: finalidade
-tags: []
+tags: [imagem]
 versao: 1
 largura: 672
 altura: 880

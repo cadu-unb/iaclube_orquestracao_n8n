@@ -168,4 +168,7 @@ def test_a_entrada_de_exemplo_usa_o_documento_de_estilo():
 
 def test_n08_os_fluxos_que_mexi_nao_ganharam_token_novo_e_o_dicionario_segue_em_branco():
     dicionario = FLUXOS["dicionario-completo"].read_text("utf-8")
-    assert "token_ponte: 'COLE_AQUI_O_TOKEN_QUE_A_PONTE_MOSTRA'" in dicionario
+    # o fluxo versionado nunca traz o token verdadeiro: ou o marcador de antes, ou o texto-coringa que o usuário pôs
+    # no lugar dele (só maiúsculas e sublinhados); o token real é colado no n8n, depois de importar
+    marcador = re.search(r"token_ponte: '([^']*)'", dicionario)
+    assert marcador and re.fullmatch(r"[A-Z_]+", marcador.group(1)), marcador and marcador.group(1)

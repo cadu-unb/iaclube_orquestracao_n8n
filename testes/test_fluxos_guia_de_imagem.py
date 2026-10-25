@@ -161,7 +161,9 @@ def test_h11_a_leitura_vem_antes_de_tudo_e_a_falha_nao_leva_ao_agente(fluxo_nome
     assert [x["node"] for x in ok] == ["Validar guia de imagem"] and [x["node"] for x in erro] == ["Guia de imagem não lido"]
     assert no(d, "Ler guia de imagem")["onError"] == "continueErrorOutput"
     assert "Guia de imagem não lido" not in con  # termina na falha: nada sai dele
-    assert con["Validar guia de imagem"]["main"][0] == [{"node": "Memoria - ler", "type": "main", "index": 0}]
+    # 1.9.2-I: depois do guia vem a leitura do prompt de reserva das imagens; só então a memória
+    assert con["Validar guia de imagem"]["main"][0] == [{"node": "Ler prompt de reserva", "type": "main", "index": 0}]
+    assert con["Validar prompt de reserva"]["main"][0] == [{"node": "Memoria - ler", "type": "main", "index": 0}]
 
 
 @pytest.mark.parametrize("fluxo_nome", sorted(GUIAS))

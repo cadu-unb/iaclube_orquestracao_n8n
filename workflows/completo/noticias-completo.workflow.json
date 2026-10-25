@@ -597,7 +597,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma a edicao que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_documento, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Monta slides do carrossel': o que esta no card do Trello e o\n// que vai para a arte. Ordem dos cards: capa, indice, uma noticia por card, encerramento.\nconst cfg = $('Configuração').first().json;\nconst d = $('Monta slides do carrossel').first().json;\nconst noticias = Array.isArray(d.noticias) ? d.noticias : [];\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\n\nconst capa = doPapel('gancho')[0] || { titulo: '', texto: '' };\nconst indice = doPapel('contexto')[0] || { titulo: 'Índice' };\nconst corpo = doPapel('desenvolvimento');\nconst fim = doPapel('cta')[0] || { titulo: '', texto: '' };\n\nconst cards = [];\nconst imagens = [];\n\ncards.push({ modelo: 'capa', campos: { titulo: capa.titulo, corpo: capa.texto } });\n\n// O modelo de indice do news tem 6 itens (item_1 a item_6). Com mais noticias, fica de fora.\nif (noticias.length <= 6) {\n  const campos = { titulo: indice.titulo };\n  noticias.forEach((n, i) => { campos['item_' + (i + 1)] = umaLinha(n.rotulo_indice || n.manchete); });\n  cards.push({ modelo: 'indice', campos });\n}\n\nnoticias.forEach((n, i) => {\n  const s = corpo[i] || { titulo: umaLinha(n.manchete), texto: umaLinha(n.texto_slide) };\n  cards.push({ modelo: 'texto-com-imagem', campos: { titulo: s.titulo, corpo: s.texto } });\n  const prompt = umaLinha(n.prompt_imagem) ||\n    'an editorial illustration about artificial intelligence news, ' + umaLinha(n.rotulo_indice || n.manchete);\n  imagens.push({\n    card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n    mascara: 'imagem_1',\n    nome_arquivo: 'noticia-' + String(i + 1).padStart(2, '0') + (slug(n.rotulo_indice) ? '-' + slug(n.rotulo_indice) : ''),\n    prompt,\n  });\n});\n\ncards.push({ modelo: 'encerramento', campos: { titulo: fim.titulo, corpo: fim.texto } });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  nome: ('Notícias IA ' + data + ' ' + umaLinha(d.tema_card)).trim().slice(0, 80),\n  estilo_documento: cfg.estilo_documento || '',\n  entrada: { serie: cfg.serie, data, assunto: cfg.assunto, marca: cfg.marca, cards },\n  imagens,\n} }];\n"
+        "jsCode": "// PONTE ENTRE O TEXTO E A ARTE\n// Transforma a edicao que acabou de ir para o Trello no mesmo formato do arquivo\n// entradas/exemplo-noticias-10.json, que o resto do fluxo (igual ao noticias-2-arte) espera:\n//   { nome, estilo_documento, entrada: { serie, data, assunto, marca, cards }, imagens }\n// Os textos vem dos slides de 'Monta slides do carrossel': o que esta no card do Trello e o\n// que vai para a arte. Ordem dos cards: capa, indice, uma noticia por card, encerramento.\nconst cfg = $('Configuração').first().json;\n// O texto de reserva da cena (usado só quando a IA não escreve a cena de uma imagem) mora num documento da pasta compartilhada.\nconst reserva = String($('Ler prompt de reserva').first().json.corpo || '').trim();\nconst d = $('Monta slides do carrossel').first().json;\nconst noticias = Array.isArray(d.noticias) ? d.noticias : [];\nconst slides = Array.isArray(d.slides) ? d.slides : [];\nconst doPapel = (papel) => slides.filter(s => s.papel === papel);\nconst umaLinha = (t) => String(t || '').replace(/\\s+/g, ' ').trim();\n\n// nome de arquivo seguro para o gerador: minusculas, sem acento, so letras, numeros e '-'\nconst slug = (t) => String(t || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')\n  .slice(0, 40).replace(/-+$/g, '');\n\nconst capa = doPapel('gancho')[0] || { titulo: '', texto: '' };\nconst indice = doPapel('contexto')[0] || { titulo: 'Índice' };\nconst corpo = doPapel('desenvolvimento');\nconst fim = doPapel('cta')[0] || { titulo: '', texto: '' };\n\nconst cards = [];\nconst imagens = [];\n\ncards.push({ modelo: 'capa', campos: { titulo: capa.titulo, corpo: capa.texto } });\n\n// O modelo de indice do news tem 6 itens (item_1 a item_6). Com mais noticias, fica de fora.\nif (noticias.length <= 6) {\n  const campos = { titulo: indice.titulo };\n  noticias.forEach((n, i) => { campos['item_' + (i + 1)] = umaLinha(n.rotulo_indice || n.manchete); });\n  cards.push({ modelo: 'indice', campos });\n}\n\nnoticias.forEach((n, i) => {\n  const s = corpo[i] || { titulo: umaLinha(n.manchete), texto: umaLinha(n.texto_slide) };\n  cards.push({ modelo: 'texto-com-imagem', campos: { titulo: s.titulo, corpo: s.texto } });\n  const prompt = umaLinha(n.prompt_imagem) ||\n    reserva + ' ' + umaLinha(n.rotulo_indice || n.manchete);\n  imagens.push({\n    card: cards.length,            // posicao do card que acabou de entrar (o primeiro e 1)\n    mascara: 'imagem_1',\n    nome_arquivo: 'noticia-' + String(i + 1).padStart(2, '0') + (slug(n.rotulo_indice) ? '-' + slug(n.rotulo_indice) : ''),\n    prompt,\n  });\n});\n\ncards.push({ modelo: 'encerramento', campos: { titulo: fim.titulo, corpo: fim.texto } });\n\nconst data = $now.toISODate();\nreturn [{ json: {\n  versao: 1,\n  nome: ('Notícias IA ' + data + ' ' + umaLinha(d.tema_card)).trim().slice(0, 80),\n  estilo_documento: cfg.estilo_documento || '',\n  entrada: { serie: cfg.serie, data, assunto: cfg.assunto, marca: cfg.marca, cards },\n  imagens,\n} }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1391,6 +1391,62 @@
         260,
         80
       ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Configuração').first().json.url_ponte }}/documentos/prompt-de-reserva-noticias",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Ponte-Token",
+              "value": "={{ $('Configuração').first().json.token_ponte }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "440fd99c-5849-51d7-8d7e-48fba673e927",
+      "name": "Ler prompt de reserva",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        -160
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Confere o prompt de reserva das imagens lido da pasta de documentos: ele só é usado quando a IA não escreve a cena de uma imagem.\nconst cfg = $('Configuração').first().json;\nconst e = $input.first().json;\nconst nome = 'prompt-de-reserva-noticias';\nconst corpo = String(e.corpo || '').trim();\nif (!corpo) throw new Error('O documento «' + nome + '» está vazio: uma imagem sem cena da IA ficaria sem prompt. Escreva o texto na tela Prompts.');\nif (/\\{\\{|\\}\\}/.test(corpo)) throw new Error('O documento «' + nome + '» tem «{{» ou «}}»: o n8n entenderia como expressão. Tire esses símbolos na tela Prompts.');\nreturn [{ json: cfg }];"
+      },
+      "id": "f42dbe5c-69dd-5f83-aa35-cceb62fbb782",
+      "name": "Validar prompt de reserva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chega aqui se a ponte não entregou o prompt de reserva: o fluxo para antes de gastar a IA.\nconst e = $input.first().json;\nconst nome = 'prompt-de-reserva-noticias';\nconst detalhe = e.error\n  ? (e.error.message || JSON.stringify(e.error)) + (e.error.description ? ' — ' + e.error.description : '')\n  : JSON.stringify(e).slice(0, 300);\nthrow new Error('Não foi possível ler o documento «' + nome + '» (o prompt de reserva das imagens) pela ponte: ' + detalhe\n  + '. Confira se a ponte está no ar e se o arquivo ' + nome + '.md existe na pasta de documentos compartilhada.');"
+      },
+      "id": "c97f3923-c072-56ab-8b5f-7bc655cd5e10",
+      "name": "Prompt de reserva não lido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -80
+      ]
     }
   ],
   "connections": {
@@ -2096,6 +2152,35 @@
       ]
     },
     "Validar guia de imagem": {
+      "main": [
+        [
+          {
+            "node": "Ler prompt de reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler prompt de reserva": {
+      "main": [
+        [
+          {
+            "node": "Validar prompt de reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prompt de reserva não lido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar prompt de reserva": {
       "main": [
         [
           {
