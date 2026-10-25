@@ -5,3 +5,6 @@
 documentos/servidores/documentos-compartilhados/**/*.bak
 documentos/servidores/documentos-compartilhados/**/*.tmp
 documentos/servidores/documentos-compartilhados/**/*.lock
+
+
+chave-ponte.md
