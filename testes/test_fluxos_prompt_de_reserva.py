@@ -57,7 +57,7 @@ def documento(nome):
 @pytest.mark.parametrize("fluxo_nome", sorted(RESERVAS))
 def test_i03_o_prompt_de_reserva_existe_como_documento_categorizado_e_com_a_tag_de_imagem(fluxo_nome):
     chaves, corpo = documento(RESERVAS[fluxo_nome])
-    assert chaves["tipo"] == "prompt" and chaves["categoria"] == "prompt-de-reserva" and chaves["origem"] == "outro"
+    assert chaves["tipo"] == "prompt" and chaves["categoria"] == "sistema" and chaves["origem"] == "outro"
     assert "n8n" in chaves["tags"] and "imagem" in chaves["tags"] and chaves["titulo"]
     assert "{{" not in corpo and "}}" not in corpo and corpo.strip() == TEXTO_DE_ANTES[fluxo_nome].strip()
 

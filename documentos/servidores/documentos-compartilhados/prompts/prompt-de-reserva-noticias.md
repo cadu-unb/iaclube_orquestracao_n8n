@@ -1,7 +1,7 @@
 ---
 titulo: Prompt de reserva das imagens: Notícias IA (lido pelo n8n)
 tipo: prompt
-categoria: prompt-de-reserva
+categoria: sistema
 tags: [n8n, imagem, noticias]
 origem: outro
 ---

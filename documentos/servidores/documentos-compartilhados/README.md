@@ -10,6 +10,8 @@ Os documentos ficam em [`prompts/`](prompts/): arquivos `.md` (prompts, glossár
 
 **Como cada arquivo é lido** (nome, cabeçalho, tipo, categoria, links, gravação) está no contrato `docs/contratos/17-documentos-compartilhados.md` do `iaclube_n8n`. Para as aplicações usarem esta pasta, aponte `IACLUBE_DOCUMENTOS` para o caminho **absoluto** de `prompts/`.
 
+**Categoria `sistema`:** os seis documentos que o **n8n lê direto** pela ponte (`estilo-noticias`, `estilo-dicionario`, `guia-de-imagem-noticias`, `guia-de-imagem-dicionario`, `prompt-de-reserva-noticias` e `prompt-de-reserva-dicionario`) ficam na categoria `sistema` («Sistema (lidos pelo n8n)»). As telas Prompts da 8000 e da 7000 mostram essa seção **sempre no topo**, antes de «Favoritos». Se um fluxo passar a ler outro documento, ponha `categoria: sistema` nele.
+
 **Uma pasta só, ligada por padrão (MVP 1.9.1, fase 0A):** os dois servidores usam esta pasta **sozinhos** quando sobem por `scripts/servidor.sh` ou pela ponte (a variável `IACLUBE_DOCUMENTOS` é definida ali). Quem sobe um servidor à mão define a variável, como acima. Sem a pasta ligada, as duas telas **avisam** em vez de mostrar só o catálogo próprio.
 
 **Origem:** cada documento tem a chave `origem` no cabeçalho (`8000`, `7000` ou `outro`): quem **criou** o arquivo. Onde se edita não importa.

@@ -1,7 +1,7 @@
 ---
 titulo: Estilo das imagens: Dicionário IA
 tipo: imagem
-categoria: estilo
+categoria: sistema
 tags: [dicionario, imagem]
 uso: sufixo
 origem: 7000

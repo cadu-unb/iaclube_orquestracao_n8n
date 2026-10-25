@@ -196,7 +196,7 @@ PASTA_DE_VERDADE = RAIZ / "documentos" / "servidores" / "documentos-compartilhad
 @pytest.mark.parametrize("nome", ESTILOS)
 def test_n05_os_documentos_de_estilo_tem_o_texto_identico_ao_estilo_comum_de_antes(nome):
     doc = ponte.ler_documento(PASTA_DE_VERDADE, nome)
-    assert (doc["tipo"], doc["categoria"], doc["extras"]["uso"]) == ("imagem", "estilo", "sufixo")
+    assert (doc["tipo"], doc["categoria"], doc["extras"]["uso"]) == ("imagem", "sistema", "sufixo")
     assert hashlib.sha256(doc["corpo"].strip().encode()).hexdigest() == ESTILOS[nome]
 
 
