@@ -127,14 +127,19 @@ def test_h09_as_tags_novas_estao_no_cadastro():
 # ----------------------------------------------------------------------------------------------- H-10
 
 
+def sem_a_regra_de_acentuacao(texto: str) -> str:
+    """Tira do prompt do agente o bloco «IDIOMA E ACENTUAÇÃO» (acrescentado em 2026-10-30), para comparar com o de antes."""
+    return re.sub(r"IDIOMA E ACENTUAÇÃO \(REGRA OBRIGATÓRIA\)\n.*?\n\n(?=PERSONALIDADE DA MARCA)", "", texto, count=1, flags=re.S)
+
+
 @pytest.mark.parametrize("fluxo_nome", sorted(GUIAS))
 def test_h10_o_prompt_final_do_agente_e_byte_a_byte_o_de_antes(fluxo_nome):
-    final = prompt_final(fluxo_nome)
+    final = sem_a_regra_de_acentuacao(prompt_final(fluxo_nome))
     assert hashlib.sha256(final.encode("utf-8")).hexdigest() == PROMPT_DE_ANTES[fluxo_nome]
 
 
 def test_h10_o_hands_on_nao_mudou():
-    texto = no(fluxo("hands_on-completo"), AGENTE_DO_HANDS_ON)["parameters"]["text"]
+    texto = sem_a_regra_de_acentuacao(no(fluxo("hands_on-completo"), AGENTE_DO_HANDS_ON)["parameters"]["text"])
     assert hashlib.sha256(texto.encode("utf-8")).hexdigest() == PROMPT_DE_ANTES["hands_on-completo"]
     assert "Ler guia de imagem" not in json.dumps(fluxo("hands_on-completo"))
 
